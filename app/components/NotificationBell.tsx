@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { supabase } from "../lib/supabase";
 
@@ -69,7 +69,7 @@ export default function NotificationBell() {
 
   const unread = notifications.filter((n) => !n.read).length;
 
-  const typeIcon: Record<string, JSX.Element> = {
+  const typeIcon: Record<string, ReactNode> = {
     vote_milestone: (
       <svg className="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
