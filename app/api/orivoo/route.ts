@@ -487,11 +487,13 @@ ${liveCivicContext}
 `
           : `
 LIVE CIVIC VERIFICATION STATUS:
+LIVE CIVIC VERIFICATION STATUS:
 No live source context was found.
-Use general civic knowledge when it is safe and commonly known.
-If the answer may have changed recently, answer carefully and say current verification may still be needed.
+
+Answer common civic facts directly when safe.
 Do not refuse basic civic questions.
-Do not say "I don't have enough verified information" for common civic facts unless you truly cannot answer.
+Do not say "I don't have enough verified information" for basic facts like the current U.S. President, the number of Supreme Court justices, or general civic structure.
+If the question is about a fast-changing local office, election deadline, bill status, court roster, or local rule, answer carefully and say current verification may still be needed.
 `,
       },
       ...cleanHistory,
