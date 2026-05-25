@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import VoteCard from "../components/VoteCard";
-import { CATEGORIES, CATEGORY_COLORS, US_STATES } from "../lib/constants";
+import {
+  CATEGORIES,
+  CATEGORY_COLORS,
+  US_STATES,
+  STATE_ABBR,
+} from "../lib/constants";
 import MobileNav from "../components/MobileNav";
 
 interface Representative {
@@ -27,6 +32,7 @@ interface UserVote {
   vote_type: string;
 }
 
+
 export default function RepresentativesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -46,9 +52,12 @@ export default function RepresentativesPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
+  
+
   useEffect(() => {
     fetchRepresentatives();
     fetchUserVotes();
+    
 
     const channel = supabase
       .channel("live-updates")
@@ -64,7 +73,6 @@ export default function RepresentativesPage() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Close suggestions on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
@@ -75,9 +83,14 @@ export default function RepresentativesPage() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+ 
+
   async function fetchRepresentatives() {
     setLoading(true);
-    const { data, error } = await supabase.from("representatives").select("*");
+    const { data, error } = await supabase
+  .from("representatives")
+  .select("*")
+  .range(0, 99);
     if (error) { console.error(error); setLoading(false); return; }
 
     const updatedReps = await Promise.all(
@@ -132,24 +145,41 @@ export default function RepresentativesPage() {
     fetchRepresentatives();
   }
 
-  // Autocomplete
-  function handleSearchInput(val: string) {
-    setSearchQuery(val);
-    if (val.length < 2) { setSuggestions([]); setShowSuggestions(false); return; }
-    const matches = representatives
-      .filter((r) =>
-        r.name.toLowerCase().includes(val.toLowerCase()) ||
-        r.title.toLowerCase().includes(val.toLowerCase()) ||
-        r.state.toLowerCase().includes(val.toLowerCase()) ||
-        (r.city || "").toLowerCase().includes(val.toLowerCase())
-      )
-      .slice(0, 6);
-    setSuggestions(matches);
-    setShowSuggestions(true);
+  async function handleSearchInput(
+  val: string
+) {
+  setSearchQuery(val);
+
+  if (val.length < 2) {
+    setSuggestions([]);
+    setShowSuggestions(false);
+
+    fetchRepresentatives();
+
+    return;
   }
 
-  // Filtered list
+  const { data, error } = await supabase
+    .from("representatives")
+    .select("*")
+    .or(`name.ilike.%${val}%,title.ilike.%${val}%,state.ilike.%${val}%,city.ilike.%${val}%`)
+    .limit(20);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setRepresentatives(data || []);
+
+  setSuggestions(data || []);
+
+  setShowSuggestions(true);
+}
+
+
   const filtered = representatives.filter((r) => {
+    console.log("SELECTED CATEGORY:", selectedCategory);
     const q = searchQuery.toLowerCase();
     const matchSearch =
       !q ||
@@ -159,14 +189,39 @@ export default function RepresentativesPage() {
       (r.city || "").toLowerCase().includes(q) ||
       (r.county || "").toLowerCase().includes(q) ||
       (r.zip_code || "").includes(q);
-    const matchCat =
-      selectedCategory === "all" || r.category.toLowerCase() === selectedCategory.toLowerCase();
-    const matchState =
-      selectedState === "all" || r.state === selectedState;
+  
+  const matchCat =
+  searchQuery.length > 0
+    ? true
+    : selectedCategory === "all"
+    ? true
+    : selectedCategory === "state"
+    ? r.category === "House" ||
+      r.category === "Senate" ||
+      r.title?.includes("Representative") ||
+      r.title?.includes("Senator")
+    : selectedCategory === "governor"
+    ? r.title?.toLowerCase().includes("governor")
+    : selectedCategory === "mayor"
+    ? r.title?.toLowerCase().includes("mayor")
+    : selectedCategory === "sheriff"
+    ? r.title?.toLowerCase().includes("sheriff")
+    : selectedCategory === "judge"
+    ? r.title?.toLowerCase().includes("judge")
+    : selectedCategory === "school_board"
+    ? r.title?.toLowerCase().includes("school")
+    : selectedCategory === "city_council"
+    ? r.title?.toLowerCase().includes("council")
+    : true;
+    const stateAbbr =
+  STATE_ABBR[selectedState] || selectedState;
+
+const matchState =
+  selectedState === "all" ||
+  r.state === stateAbbr;
     return matchSearch && matchCat && matchState;
   });
 
-  // Sort by most votes
   const sorted = [...filtered].sort(
     (a, b) =>
       (b.approve_count || 0) + (b.disapprove_count || 0) -
@@ -183,32 +238,14 @@ export default function RepresentativesPage() {
             <span className="text-white">Pulse</span>
             <span className="text-yellow-400">50</span>
           </Link>
-
-          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <Link href="/representatives" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">
-              Directory
-            </Link>
-            <Link href="/trending" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">
-              Trending
-            </Link>
-            <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">
-              States
-            </Link>
+            <Link href="/representatives" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Directory</Link>
+            <Link href="/trending" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Trending</Link>
+            <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">States</Link>
           </div>
-
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden md:block rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black hover:bg-yellow-300 transition"
-            >
-              Login
-            </Link>
-            {/* Mobile hamburger */}
-            <button
-              className="md:hidden p-2 text-gray-400 hover:text-white"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
+            <Link href="/login" className="hidden md:block rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black hover:bg-yellow-300 transition">Login</Link>
+            <button className="md:hidden p-2 text-gray-400 hover:text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen
                   ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -218,8 +255,6 @@ export default function RepresentativesPage() {
             </button>
           </div>
         </div>
-
-        {/* Mobile menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
             <Link href="/representatives" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Directory</Link>
@@ -268,8 +303,6 @@ export default function RepresentativesPage() {
               </button>
             )}
           </div>
-
-          {/* Autocomplete dropdown */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute top-full left-0 right-0 z-50 border border-white/10 border-t-0 bg-black shadow-2xl">
               {suggestions.map((s) => {
@@ -284,9 +317,7 @@ export default function RepresentativesPage() {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition text-left"
                   >
-                    <span className={`text-xs font-black px-2 py-0.5 uppercase shrink-0 ${tagColor}`}>
-                      {s.category}
-                    </span>
+                    <span className={`text-xs font-black px-2 py-0.5 uppercase shrink-0 ${tagColor}`}>{s.category}</span>
                     <span className="text-white font-bold text-sm truncate">{s.name}</span>
                     <span className="text-gray-500 text-xs ml-auto shrink-0">{s.state}</span>
                   </button>
@@ -298,12 +329,81 @@ export default function RepresentativesPage() {
 
         {/* ── FILTERS ── */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
-          {/* Category pills — horizontal scroll on mobile */}
           <div className="flex gap-2 overflow-x-auto pb-1 flex-1 scrollbar-none">
             {CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                onClick={async () => {
+  setSelectedCategory(cat.id);
+
+  if (cat.id === "all") {
+    fetchRepresentatives();
+    return;
+  }
+
+  let query = supabase
+    .from("representatives")
+    .select("*");
+
+  if (cat.id === "governor") {
+    query = query.in("category", [
+      "Governor",
+      "Governors",
+    ]);
+  }
+
+  else if (cat.id === "state") {
+    query = query.in("category", [
+      "House",
+      "Senate",
+    ]);
+  }
+
+  else if (cat.id === "mayor") {
+    query = query.in("category", [
+      "Mayor",
+      "Mayors",
+    ]);
+  }
+
+  else if (cat.id === "sheriff") {
+    query = query.in("category", [
+      "Sheriff",
+      "Sheriffs",
+    ]);
+  }
+
+  else if (cat.id === "judge") {
+    query = query.in("category", [
+      "Judge",
+      "Judges",
+    ]);
+  }
+
+  else if (cat.id === "school_board") {
+    query = query.in("category", [
+      "School Board",
+      "School Boards",
+    ]);
+  }
+
+  else if (cat.id === "city_council") {
+    query = query.in("category", [
+      "City Council",
+      "City Councils",
+    ]);
+  }
+
+  const { data, error } =
+    await query.limit(100);
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  setRepresentatives(data || []);
+}}
                 className={`shrink-0 px-4 py-2 text-xs font-black uppercase tracking-wider border transition whitespace-nowrap ${
                   selectedCategory === cat.id
                     ? "bg-yellow-400 text-black border-yellow-400"
@@ -314,8 +414,6 @@ export default function RepresentativesPage() {
               </button>
             ))}
           </div>
-
-          {/* State filter */}
           <select
             value={selectedState}
             onChange={(e) => setSelectedState(e.target.value)}
@@ -349,22 +447,16 @@ export default function RepresentativesPage() {
           )}
         </div>
 
-        {/* ── SLIDER ── */}
+        {/* ── SUPABASE REPS SLIDER ── */}
         {loading ? (
           <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
             {[...Array(6)].map((_, i) => (
               <div key={i} className="shrink-0 w-[85vw] sm:w-[360px] border border-white/10 bg-white/[0.02] p-6 animate-pulse space-y-4">
-                <div className="flex gap-2">
-                  <div className="h-6 w-20 bg-white/5" />
-                  <div className="h-6 w-12 bg-white/5" />
-                </div>
+                <div className="flex gap-2"><div className="h-6 w-20 bg-white/5" /><div className="h-6 w-12 bg-white/5" /></div>
                 <div className="h-7 bg-white/5 w-3/4" />
                 <div className="h-4 bg-white/5 w-1/2" />
                 <div className="h-1.5 bg-white/5 w-full mt-4" />
-                <div className="flex gap-3 pt-2">
-                  <div className="flex-1 h-12 bg-white/5" />
-                  <div className="flex-1 h-12 bg-white/5" />
-                </div>
+                <div className="flex gap-3 pt-2"><div className="flex-1 h-12 bg-white/5" /><div className="flex-1 h-12 bg-white/5" /></div>
                 <div className="h-11 bg-white/5 w-full" />
               </div>
             ))}
@@ -392,12 +484,12 @@ export default function RepresentativesPage() {
                 </div>
               ))}
             </div>
-            {/* Scroll hint fade */}
             <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-black to-transparent pointer-events-none" />
           </div>
         )}
-      </div>
 
+ </div>{/* ← closes max-w-7xl */}
+       
       {/* ── FOOTER ── */}
       <footer className="border-t border-white/10 bg-black px-6 py-10 mt-16">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 md:flex-row">

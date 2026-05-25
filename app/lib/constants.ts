@@ -1,7 +1,6 @@
 // ── Category definitions ──────────────────────────────────────────────────────
 export const CATEGORIES = [
   { id: "all",           label: "All",            icon: "⚡" },
-  { id: "federal",       label: "Federal",         icon: "🏛" },
   { id: "governor",      label: "Governors",       icon: "🏛" },
   { id: "state",         label: "State Reps",      icon: "📋" },
   { id: "mayor",         label: "Mayors",          icon: "🏙" },
@@ -9,14 +8,12 @@ export const CATEGORIES = [
   { id: "judge",         label: "Judges",          icon: "⚖️" },
   { id: "school_board",  label: "School Boards",   icon: "🎓" },
   { id: "city_council",  label: "City Councils",   icon: "🏘" },
-  { id: "bill",          label: "Bills & Policies",icon: "📜" },
-  { id: "local_issue",   label: "Local Issues",    icon: "📍" },
+
 ] as const;
 
 export type CategoryId = typeof CATEGORIES[number]["id"];
 
 export const CATEGORY_COLORS: Record<string, string> = {
-  federal:      "bg-yellow-400 text-black",
   governor:     "bg-blue-500 text-white",
   state:        "bg-purple-500 text-white",
   mayor:        "bg-orange-500 text-white",
@@ -24,8 +21,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   judge:        "bg-slate-500 text-white",
   school_board: "bg-green-600 text-white",
   city_council: "bg-teal-500 text-white",
-  bill:         "bg-indigo-500 text-white",
-  local_issue:  "bg-rose-500 text-white",
+  
 };
 
 export const US_STATES = [
