@@ -231,10 +231,63 @@ function buildSearchMessage(message: string, history: OrivooHistoryItem[]) {
 }
 
 function buildUniversalCivicQueries(searchMessage: string) {
+  const text = searchMessage.toLowerCase();
+
+  if (
+    text.includes("u.s. president") ||
+    text.includes("us president") ||
+    text.includes("president of the united states")
+  ) {
+    return [
+      `${searchMessage} current official site:whitehouse.gov`,
+      `${searchMessage} current president official White House`,
+      `${searchMessage} official government website current`,
+    ];
+  }
+
+  if (
+    text.includes("u.s. supreme court") ||
+    text.includes("us supreme court") ||
+    text.includes("supreme court justice") ||
+    text.includes("supreme court justices")
+  ) {
+    return [
+      `${searchMessage} current justices official site:supremecourt.gov`,
+      `${searchMessage} biographies current members site:supremecourt.gov`,
+      `${searchMessage} official court website current justices`,
+    ];
+  }
+
+  if (
+    text.includes("court") ||
+    text.includes("judge") ||
+    text.includes("justice")
+  ) {
+    return [
+      `${searchMessage} official court website current judges justices members`,
+      `${searchMessage} official judiciary website current judges justices`,
+      `${searchMessage} official government website current court`,
+    ];
+  }
+
+  if (
+    text.includes("election") ||
+    text.includes("vote") ||
+    text.includes("ballot") ||
+    text.includes("polling") ||
+    text.includes("deadline")
+  ) {
+    return [
+      `${searchMessage} official election office current`,
+      `${searchMessage} secretary of state election official current`,
+      `${searchMessage} official government election source current`,
+    ];
+  }
+
   return [
     `${searchMessage} official government website current`,
-    `${searchMessage} official court website current judges officials`,
-    `${searchMessage} official election legislative government source current`,
+    `${searchMessage} official court election legislative government source current`,
+    `${searchMessage} official public agency source current`,
   ];
 }
 
@@ -435,8 +488,10 @@ ${liveCivicContext}
           : `
 LIVE CIVIC VERIFICATION STATUS:
 No live source context was found.
-If the question requires current civic facts, current officials, judges, court membership, election rules, bill status, laws, or public office details, do not answer as if verified.
-Briefly say current verification may be needed.
+Use general civic knowledge when it is safe and commonly known.
+If the answer may have changed recently, answer carefully and say current verification may still be needed.
+Do not refuse basic civic questions.
+Do not say "I don't have enough verified information" for common civic facts unless you truly cannot answer.
 `,
       },
       ...cleanHistory,
