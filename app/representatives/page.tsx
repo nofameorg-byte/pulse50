@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { Suspense, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
@@ -33,7 +33,7 @@ interface UserVote {
 }
 
 
-export default function RepresentativesPage() {
+function RepresentativesContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialSearch = searchParams.get("search") || "";
@@ -507,7 +507,21 @@ const matchState =
           </p>
         </div>
       </footer>
-      <MobileNav />
+            <MobileNav />
     </main>
+  );
+}
+
+export default function RepresentativesPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-black text-white flex items-center justify-center">
+          Loading Pulse50...
+        </main>
+      }
+    >
+      <RepresentativesContent />
+    </Suspense>
   );
 }
