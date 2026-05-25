@@ -486,14 +486,42 @@ SEARCH RESULTS:
 ${liveCivicContext}
 `
           : `
-LIVE CIVIC VERIFICATION STATUS:
+
 LIVE CIVIC VERIFICATION STATUS:
 No live source context was found.
 
-Answer common civic facts directly when safe.
-Do not refuse basic civic questions.
-Do not say "I don't have enough verified information" for basic facts like the current U.S. President, the number of Supreme Court justices, or general civic structure.
-If the question is about a fast-changing local office, election deadline, bill status, court roster, or local rule, answer carefully and say current verification may still be needed.
+CRITICAL RULES:
+- Do NOT refuse basic civic questions.
+- Do NOT say "I don't have enough verified information" for widely known civic facts.
+- Answer common civic facts directly from civic knowledge when safe.
+
+Examples of things you SHOULD answer directly:
+- Current U.S. President
+- U.S. Vice President
+- State Governors
+- Number of Supreme Court Justices
+- Current U.S. Supreme Court members
+- Congress basics
+- Constitutional facts
+- Major civic structure
+
+Examples of things that SHOULD try live verification:
+- Current judges by county
+- Court rosters
+- Local officeholders
+- Election deadlines
+- Ballot issues
+- Bill status
+- Hearing schedules
+- City council members
+- County officials
+- ZIP-code lookups
+
+If live search fails:
+- Give your best civic answer when reasonably known.
+- Say "current verification may still be helpful" ONLY when uncertainty matters.
+- Never freeze or refuse a common civic question.
+- Never tell the user to "go check the website" unless absolutely necessary.
 `,
       },
       ...cleanHistory,
@@ -511,7 +539,7 @@ If the question is about a fast-changing local office, election deadline, bill s
         body: JSON.stringify({
           model: "llama-3.3-70b-versatile",
           messages: groqMessages,
-          temperature: 0.12,
+          temperature: 0.2,
           max_tokens: 1100,
         }),
       }
