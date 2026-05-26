@@ -469,7 +469,7 @@ async function unbanUser(userId: string) {
           <>
             {/* ── REPORTED COMMENTS ── */}
             {tab === "reports" && (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
                 {reports.length === 0 ? (
                   <div className="text-center py-20 border border-white/10">
                     <p className="text-3xl font-black text-white/10 mb-2">All Clear</p>
@@ -539,7 +539,7 @@ async function unbanUser(userId: string) {
 
             {/* ── ALL COMMENTS ── */}
             {tab === "comments" && (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
                 {allComments.map((c) => (
                   <div
                     key={c.id}
@@ -578,7 +578,7 @@ async function unbanUser(userId: string) {
 
             {/* ── USERS ── */}
             {tab === "users" && (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
                 {allUsers.map((u) => (
                   <div key={u.id} className={`border p-5 flex items-center justify-between gap-4 ${u.banned ? "border-red-500/20 bg-red-500/5" : "border-white/10 bg-white/[0.02]"}`}>
                     <div>
@@ -605,7 +605,7 @@ async function unbanUser(userId: string) {
 
             {/* ── BANNED ── */}
             {tab === "banned" && (
-              <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+              <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
                 {bannedUsers.length === 0 ? (
                   <div className="text-center py-20 border border-white/10">
                     <p className="text-3xl font-black text-white/10 mb-2">No Banned Users</p>

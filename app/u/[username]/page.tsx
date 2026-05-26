@@ -237,7 +237,7 @@ export default function UserProfilePage() {
 
         {/* Vote history */}  
         {tab === "votes" && (
-  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+  <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
             {votes.length === 0 ? (
               <div className="text-center py-16 border border-white/10">
                 <p className="text-3xl font-black text-white/10 mb-2">No Votes Yet</p>
@@ -283,7 +283,7 @@ export default function UserProfilePage() {
 
         {/* Comment history */}
         {tab === "comments" && (
-  <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
+  <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
             {comments.length === 0 ? (
               <div className="text-center py-16 border border-white/10">
                 <p className="text-3xl font-black text-white/10 mb-2">No Comments Yet</p>
