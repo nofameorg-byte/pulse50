@@ -157,15 +157,40 @@ export default function AdminPage() {
 }
 
   async function fetchAllComments() {
-    setLoading(true);
-    const { data } = await supabase
-      .from("comments")
-      .select("*, profiles(username)")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    setAllComments(data || []);
+  setLoading(true);
+
+  const { data, error } = await supabase
+    .from("comments")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error(error);
     setLoading(false);
+    return;
   }
+
+  const commentsWithProfiles = await Promise.all(
+    (data || []).map(async (comment: any) => {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", comment.user_id)
+        .single();
+
+      return {
+        ...comment,
+        profiles: {
+          username: profile?.username || "Citizen",
+        },
+      };
+    })
+  );
+
+  setAllComments(commentsWithProfiles);
+  setLoading(false);
+}
 
   async function fetchBanned() {
     setLoading(true);
