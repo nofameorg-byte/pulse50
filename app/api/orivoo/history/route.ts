@@ -12,7 +12,9 @@ const supabase =
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
     const sessionId = typeof body?.sessionId === "string" ? body.sessionId : "";
+    const userId = typeof body?.userId === "string" ? body.userId : "";
 
     if (!sessionId) {
       return NextResponse.json({ messages: [] });
@@ -22,12 +24,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ messages: [] });
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from("orivoo_memory")
       .select("id, user_message, orivoo_reply, created_at")
       .eq("session_id", sessionId)
       .order("created_at", { ascending: false })
       .limit(25);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("ORIVOO history read error:", error);

@@ -184,19 +184,24 @@ if (
   );
 }
 
-function getRecentTopicFromHistory(history: OrivooHistoryItem[]) {
+function getRecentTopicFromHistory(
+  history: OrivooHistoryItem[]
+) {
   const recent = history
-    .slice(0, 3)
+    .slice(0, 2)
     .reverse()
     .map((item) => {
-      const question = typeof item?.question === "string" ? item.question : "";
-      const answer = typeof item?.answer === "string" ? item.answer : "";
-      return `${question}\n${answer}`;
+      const question =
+        typeof item?.question === "string"
+          ? item.question
+          : "";
+
+      return question;
     })
-    .join("\n\n")
+    .join(" | ")
     .trim();
 
-  return recent;
+  return recent.slice(0, 180);
 }
 
 function buildSearchMessage(message: string, history: OrivooHistoryItem[]) {
@@ -360,15 +365,24 @@ async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[])
   }
 }
 
-async function getSavedMemory(sessionId: string) {
+async function getSavedMemory(
+  sessionId: string,
+  userId?: string
+) {
   if (!supabase || !sessionId) return [];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("orivoo_memory")
     .select("user_message, orivoo_reply")
     .eq("session_id", sessionId)
     .order("created_at", { ascending: false })
     .limit(10);
+
+  if (userId) {
+    query = query.eq("user_id", userId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("ORIVOO memory read error:", error);
@@ -380,16 +394,20 @@ async function getSavedMemory(sessionId: string) {
 
 async function saveMemory(
   sessionId: string,
+  userId: string,
   userMessage: string,
   orivooReply: string
 ) {
   if (!supabase || !sessionId) return;
 
-  const { error } = await supabase.from("orivoo_memory").insert({
-    session_id: sessionId,
-    user_message: userMessage,
-    orivoo_reply: orivooReply,
-  });
+  const { error } = await supabase
+    .from("orivoo_memory")
+    .insert({
+      session_id: sessionId,
+      user_id: userId || null,
+      user_message: userMessage,
+      orivoo_reply: orivooReply,
+    });
 
   if (error) {
     console.error("ORIVOO memory save error:", error);
@@ -401,7 +419,14 @@ export async function POST(req: Request) {
     const body = await req.json();
     const message = body?.message;
     const sessionId = typeof body?.sessionId === "string" ? body.sessionId : "";
-    const history = Array.isArray(body?.history) ? body.history : [];
+    const history = Array.isArray(body?.history)
+  ? body.history
+  : [];
+
+const userId =
+  typeof body?.userId === "string"
+    ? body.userId
+    : "";
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
@@ -410,7 +435,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const savedMemory = sessionId ? await getSavedMemory(sessionId) : [];
+    const savedMemory = sessionId
+  ? await getSavedMemory(sessionId, userId)
+  : [];
 
     const memoryHistory: OrivooHistoryItem[] = savedMemory.map((item) => ({
       question: item.user_message,
@@ -561,7 +588,12 @@ If live search fails:
       "I don’t have enough verified information on that yet.";
 
     if (sessionId) {
-      await saveMemory(sessionId, message, reply);
+      await saveMemory(
+  sessionId,
+  userId,
+  message,
+  reply
+);
     }
 
     return NextResponse.json({

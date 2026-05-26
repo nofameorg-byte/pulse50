@@ -143,22 +143,85 @@ export default function AdminPage() {
   }
 
   async function banUser(userId: string) {
-    await supabase.from("profiles")
-      .update({ banned: true, banned_at: new Date().toISOString() })
-      .eq("id", userId);
-    flash("User banned.");
-    fetchUsers();
-    fetchBanned();
+  const bannedAt = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      banned: true,
+      banned_at: bannedAt,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    flash("Failed to ban user.");
+    console.error(error);
+    return;
   }
 
-  async function unbanUser(userId: string) {
-    await supabase.from("profiles")
-      .update({ banned: false, banned_at: null })
-      .eq("id", userId);
-    flash("User unbanned.");
-    fetchBanned();
-    fetchUsers();
+  setAllUsers((prev) =>
+    prev.map((user) =>
+      user.id === userId
+        ? {
+            ...user,
+            banned: true,
+            banned_at: bannedAt,
+          }
+        : user
+    )
+  );
+
+  setBannedUsers((prev) => {
+    const user = allUsers.find((u) => u.id === userId);
+
+    if (!user) return prev;
+
+    return [
+      {
+        id: user.id,
+        username: user.username,
+        banned_at: bannedAt,
+      },
+      ...prev,
+    ];
+  });
+
+  flash("User banned.");
+}
+
+async function unbanUser(userId: string) {
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      banned: false,
+      banned_at: null,
+    })
+    .eq("id", userId);
+
+  if (error) {
+    flash("Failed to unban user.");
+    console.error(error);
+    return;
   }
+
+  setAllUsers((prev) =>
+    prev.map((user) =>
+      user.id === userId
+        ? {
+            ...user,
+            banned: false,
+            banned_at: null,
+          }
+        : user
+    )
+  );
+
+  setBannedUsers((prev) =>
+    prev.filter((user) => user.id !== userId)
+  );
+
+  flash("User unbanned.");
+}
 
   function flash(msg: string) {
     setActionMsg(msg);
