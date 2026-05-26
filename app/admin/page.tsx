@@ -53,18 +53,55 @@ export default function AdminPage() {
   }, [tab, isAdmin]);
 
   async function checkAdmin() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/login"); return; }
-    // Check admin flag in profiles table
-    const { data: profile } = await supabase
-      .from("profiles").select("is_admin").eq("id", user.id).single();
-    if (!profile?.is_admin) {
-      router.push("/");
-      return;
-    }
-    setIsAdmin(true);
-    setLoading(false);
+  setLoading(true);
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.user) {
+    setTimeout(async () => {
+      const {
+        data: { session: retrySession },
+      } = await supabase.auth.getSession();
+
+      if (!retrySession?.user) {
+        router.push("/login");
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("is_admin")
+        .eq("id", retrySession.user.id)
+        .single();
+
+      if (!profile?.is_admin) {
+        router.push("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      setLoading(false);
+    }, 700);
+
+    return;
   }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", session.user.id)
+    .single();
+
+  if (!profile?.is_admin) {
+    router.push("/");
+    return;
+  }
+
+  setIsAdmin(true);
+  setLoading(false);
+}
 
   async function fetchReports() {
     setLoading(true);
