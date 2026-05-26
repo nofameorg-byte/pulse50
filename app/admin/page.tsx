@@ -104,20 +104,57 @@ export default function AdminPage() {
 }
 
   async function fetchReports() {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("comment_reports")
-      .select(`
-        *,
-        comments (
-          id, content, user_id, representative_id, hidden,
-          profiles ( username )
-        )
-      `)
-      .order("created_at", { ascending: false });
-    if (!error) setReports(data || []);
+  setLoading(true);
+
+  const { data, error } = await supabase
+    .from("comment_reports")
+    .select(`
+      id,
+      reason,
+      created_at,
+      comments (
+        id,
+        content,
+        user_id,
+        representative_id,
+        hidden
+      )
+    `)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
     setLoading(false);
+    return;
   }
+
+  const reportsWithProfiles = await Promise.all(
+    (data || []).map(async (report: any) => {
+      if (!report.comments?.user_id) {
+        return report;
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", report.comments.user_id)
+        .single();
+
+      return {
+        ...report,
+        comments: {
+          ...report.comments,
+          profiles: {
+            username: profile?.username || "Citizen",
+          },
+        },
+      };
+    })
+  );
+
+  setReports(reportsWithProfiles);
+  setLoading(false);
+}
 
   async function fetchAllComments() {
     setLoading(true);
@@ -408,18 +445,8 @@ async function unbanUser(userId: string) {
                         >
                           Delete
                         </button>
-                        <button
-                          onClick={() => banUser(r.comments.user_id)}
-                          className="px-3 py-1.5 border border-red-800/40 text-red-600 text-xs font-black uppercase tracking-wider hover:bg-red-900/20 transition"
-                        >
-                          Ban User
-                        </button>
-                        <button
-                          onClick={() => dismissReport(r.id)}
-                          className="px-3 py-1.5 border border-white/10 text-gray-600 text-xs font-black uppercase tracking-wider hover:border-white/20 hover:text-gray-400 transition"
-                        >
-                          Dismiss
-                        </button>
+                          
+                        
                       </div>
                     </div>
                   </div>
