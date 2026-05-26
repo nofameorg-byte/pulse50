@@ -478,7 +478,7 @@ async function unbanUser(userId: string) {
                 ) : reports.map((r) => (
                   <div key={r.id} className="border border-red-500/20 bg-red-500/5 p-5 relative">
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-red-500/40" />
-                    <div className="flex items-start justify-between gap-4 mb-3">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-3">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-yellow-400 font-bold text-sm">
@@ -545,7 +545,7 @@ async function unbanUser(userId: string) {
                     key={c.id}
                     className={`border p-5 relative ${c.hidden ? "border-white/5 bg-white/[0.01] opacity-50" : "border-white/10 bg-white/[0.02]"}`}
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-yellow-400 font-bold text-sm">
@@ -580,7 +580,7 @@ async function unbanUser(userId: string) {
             {tab === "users" && (
               <div className="space-y-3 max-h-[70vh] min-h-0 overflow-y-auto pr-2">
                 {allUsers.map((u) => (
-                  <div key={u.id} className={`border p-5 flex items-center justify-between gap-4 ${u.banned ? "border-red-500/20 bg-red-500/5" : "border-white/10 bg-white/[0.02]"}`}>
+                  <div key={u.id} className={`border p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4 ${u.banned ? "border-red-500/20 bg-red-500/5" : "border-white/10 bg-white/[0.02]"}`}>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-white font-bold">@{u.username || "Unnamed"}</span>
@@ -611,7 +611,7 @@ async function unbanUser(userId: string) {
                     <p className="text-3xl font-black text-white/10 mb-2">No Banned Users</p>
                   </div>
                 ) : bannedUsers.map((u) => (
-                  <div key={u.id} className="border border-red-500/20 bg-red-500/5 p-5 flex items-center justify-between gap-4">
+                  <div key={u.id} className="border border-red-500/20 bg-red-500/5 p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <div>
                       <span className="text-white font-bold">@{u.username}</span>
                       <p className="text-gray-600 text-xs mt-1">
