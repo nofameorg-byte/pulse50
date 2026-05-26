@@ -590,23 +590,22 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-xs text-gray-600">
-              © {new Date().getFullYear()} Pulse50. Not affiliated with any political party or
-              government entity.
-            </p>
-            <p className="text-xs text-gray-600">
-              Pulse50 is a public opinion platform and does not represent official election results.
-              
-            </p>
-          
-          <Link
-  href="/admin"
-  className="text-gray-800 hover:text-yellow-400 transition text-xs"
->
-  🔒
-</Link>
+  <p className="text-xs text-gray-600">
+    © {new Date().getFullYear()} Pulse50. Not affiliated with any political party or
+    government entity.
+  </p>
 
-          </div>
+  <p className="text-xs text-gray-600">
+    Pulse50 is a public opinion platform and does not represent official election results.
+  </p>
+
+  <Link
+    href="/admin"
+    className="text-gray-800 hover:text-yellow-400 transition text-xs"
+  >
+    🔒
+  </Link>
+</div>
         </div>
       </footer>
       <MobileNav />
