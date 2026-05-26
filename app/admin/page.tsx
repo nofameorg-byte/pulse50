@@ -533,7 +533,9 @@ async function unbanUser(userId: string) {
                             <span className="border border-gray-700 text-gray-500 text-xs px-2 py-0.5 font-bold uppercase">Hidden</span>
                           )}
                         </div>
-                        <p className="text-gray-300 text-sm leading-relaxed truncate">{c.content}</p>
+                        <p className="text-gray-300 text-sm leading-relaxed whitespace-pre-wrap break-words">
+  {c.content}
+</p>
                       </div>
                       <div className="flex gap-2 shrink-0">
                         {!c.hidden ? (
