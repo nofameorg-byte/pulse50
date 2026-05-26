@@ -596,7 +596,16 @@ export default function Home() {
             </p>
             <p className="text-xs text-gray-600">
               Pulse50 is a public opinion platform and does not represent official election results.
+              
             </p>
+          
+          <Link
+  href="/admin"
+  className="text-gray-800 hover:text-yellow-400 transition text-xs"
+>
+  🔒
+</Link>
+
           </div>
         </div>
       </footer>

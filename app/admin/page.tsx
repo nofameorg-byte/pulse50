@@ -190,32 +190,90 @@ export default function AdminPage() {
   }
 
   async function hideComment(commentId: number) {
-    await supabase.from("comments").update({ hidden: true }).eq("id", commentId);
-    flash("Comment hidden.");
-    fetchReports();
-    fetchAllComments();
-  }
+  await supabase
+    .from("comments")
+    .update({ hidden: true })
+    .eq("id", commentId);
+
+  setAllComments((prev) =>
+    prev.map((comment) =>
+      comment.id === commentId
+        ? { ...comment, hidden: true }
+        : comment
+    )
+  );
+
+  setReports((prev) =>
+    prev.map((report) =>
+      report.comments?.id === commentId
+        ? {
+            ...report,
+            comments: {
+              ...report.comments,
+              hidden: true,
+            },
+          }
+        : report
+    )
+  );
+
+  flash("Comment hidden.");
+}
 
   async function unhideComment(commentId: number) {
-    await supabase.from("comments").update({ hidden: false }).eq("id", commentId);
-    flash("Comment restored.");
-    fetchAllComments();
-  }
+  await supabase
+    .from("comments")
+    .update({ hidden: false })
+    .eq("id", commentId);
 
-  async function deleteComment(commentId: number) {
-    await supabase.from("comment_reports").delete().eq("comment_id", commentId);
-    await supabase.from("comments").delete().eq("id", commentId);
-    flash("Comment deleted.");
-    fetchReports();
-    fetchAllComments();
-  }
+  setAllComments((prev) =>
+    prev.map((comment) =>
+      comment.id === commentId
+        ? { ...comment, hidden: false }
+        : comment
+    )
+  );
 
-  async function dismissReport(reportId: number) {
-    await supabase.from("comment_reports").delete().eq("id", reportId);
-    flash("Report dismissed.");
-    fetchReports();
-  }
+  setReports((prev) =>
+    prev.map((report) =>
+      report.comments?.id === commentId
+        ? {
+            ...report,
+            comments: {
+              ...report.comments,
+              hidden: false,
+            },
+          }
+        : report
+    )
+  );
 
+  flash("Comment restored.");
+}
+  
+async function deleteComment(commentId: number) {
+  await supabase
+    .from("comment_reports")
+    .delete()
+    .eq("comment_id", commentId);
+
+  await supabase
+    .from("comments")
+    .delete()
+    .eq("id", commentId);
+
+  setAllComments((prev) =>
+    prev.filter((comment) => comment.id !== commentId)
+  );
+
+  setReports((prev) =>
+    prev.filter((report) => report.comments?.id !== commentId)
+  );
+
+  flash("Comment deleted.");
+}
+
+  
   async function banUser(userId: string) {
   const bannedAt = new Date().toISOString();
 
