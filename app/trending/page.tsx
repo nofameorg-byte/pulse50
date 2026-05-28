@@ -258,7 +258,6 @@ export default function TrendingPage() {
       <VoteCard
   {...item}
   rank={idx + 1}
-  userVote={userVotes[item.id]}
       userVote={userVotes[item.id]}
       isVoting={votingId === item.id}
       onApprove={() => handleVote(item.id, "approve")}
