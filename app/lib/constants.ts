@@ -2,12 +2,13 @@
 export const CATEGORIES = [
   { id: "all",           label: "All",            icon: "⚡" },
   { id: "governor",      label: "Governors",       icon: "🏛" },
-  { id: "state",         label: "State Reps",      icon: "📋" },
-  { id: "mayor",         label: "Mayors",          icon: "🏙" },
+  { id: "state",         label: "State & Federal Reps",      icon: "📋" },
   { id: "sheriff",       label: "Sheriffs",        icon: "⭐" },
+  { id: "mayor",         label: "Mayors",          icon: "🏙" },
   { id: "judge",         label: "Judges",          icon: "⚖️" },
   { id: "school_board",  label: "School Boards",   icon: "🎓" },
   { id: "city_council",  label: "City Councils",   icon: "🏘" },
+  
 
 ] as const;
 

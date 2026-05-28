@@ -369,7 +369,7 @@ function OrivooSidebar() {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800"
+                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 relative -top-2 md:top-0"
                 >
                   Close
                 </button>
@@ -440,7 +440,7 @@ function OrivooSidebar() {
               <div ref={bottomRef} />
             </div>
 
-            <div className="border-t border-zinc-800 bg-black p-5">
+            <div className="border-t border-zinc-800 bg-black p-5 pb-10 md:pb-5">
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}

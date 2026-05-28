@@ -336,66 +336,69 @@ const matchState =
                 onClick={async () => {
   setSelectedCategory(cat.id);
 
-  if (cat.id === "all") {
-    fetchRepresentatives();
-    return;
-  }
+  if (cat.id === "mayor") {
+  setRepresentatives([
+    {
+      id: -1,
+      name: "Mayors",
+      title: "Mayors Coming Soon",
+      state: "",
+      category: "Mayors",
+    },
+  ]);
+  return;
+}
 
-  let query = supabase
-    .from("representatives")
-    .select("*");
+if (cat.id === "judge") {
+  setRepresentatives([
+    {
+      id: -2,
+      name: "Judges",
+      title: "Judges Coming Soon",
+      state: "",
+      category: "Judges",
+    },
+  ]);
+  return;
+}
+
+if (cat.id === "school_board") {
+  setRepresentatives([
+    {
+      id: -3,
+      name: "School Boards",
+      title: "School Boards Coming Soon",
+      state: "",
+      category: "School Boards",
+    },
+  ]);
+  return;
+}
+
+if (cat.id === "city_council") {
+  setRepresentatives([
+    {
+      id: -4,
+      name: "City Council",
+      title: "City Council Coming Soon",
+      state: "",
+      category: "City Council",
+    },
+  ]);
+  return;
+}
+
+  let query = supabase.from("representatives").select("*");
 
   if (cat.id === "governor") {
-    query = query.in("category", [
-      "Governor",
-      "Governors",
-    ]);
+    query = query.in("category", ["Governor", "Governors"]);
+  } else if (cat.id === "state") {
+    query = query.in("category", ["House", "Senate"]);
+  } else if (cat.id === "sheriff") {
+    query = query.in("category", ["Sheriff", "Sheriffs"]);
   }
 
-  else if (cat.id === "state") {
-    query = query.in("category", [
-      "House",
-      "Senate",
-    ]);
-  }
-
-  else if (cat.id === "mayor") {
-    query = query.in("category", [
-      "Mayor",
-      "Mayors",
-    ]);
-  }
-
-  else if (cat.id === "sheriff") {
-    query = query.in("category", [
-      "Sheriff",
-      "Sheriffs",
-    ]);
-  }
-
-  else if (cat.id === "judge") {
-    query = query.in("category", [
-      "Judge",
-      "Judges",
-    ]);
-  }
-
-  else if (cat.id === "school_board") {
-    query = query.in("category", [
-      "School Board",
-      "School Boards",
-    ]);
-  }
-
-  else if (cat.id === "city_council") {
-    query = query.in("category", [
-      "City Council",
-      "City Councils",
-    ]);
-  }
-
-  const { data, error } =
-    await query.limit(100);
+  const { data, error } = await query.limit(100);
 
   if (error) {
     console.error(error);
@@ -446,6 +449,31 @@ const matchState =
             </button>
           )}
         </div>
+
+{/* ── CIVIC DATA EXPANDING NOTICE ── */}
+<div className="mb-6 rounded-2xl border border-yellow-500 bg-yellow-400/15 p-4 shadow-lg">
+  <div className="flex items-start gap-3">
+    <div className="text-2xl shrink-0">🛠️</div>
+
+    <div>
+      <h3 className="text-lg font-bold text-yellow-300">
+        Civic Data Expanding
+      </h3>
+
+      <p className="mt-1 text-sm text-yellow-100 leading-relaxed">
+        Pulse50 is actively expanding representative, sheriff, and local
+        government coverage across the United States. New officials and
+        counties are added regularly, and updates are made often to ensure
+        accuracy.
+      </p>
+
+      <p className="mt-2 text-sm font-medium text-yellow-200">
+        If your local official is missing, check back soon — updates are
+        continuing frequently.
+      </p>
+    </div>
+  </div>
+</div>
 
         {/* ── SUPABASE REPS SLIDER ── */}
         {loading ? (

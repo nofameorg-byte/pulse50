@@ -248,23 +248,24 @@ export default function TrendingPage() {
             >
               {sorted.map((item, idx) => (
                 <div key={item.id} className="snap-start shrink-0 w-[85vw] sm:w-[360px] relative">
-                  {/* Rank badge */}
-                  {idx < 3 && (
-                    <div className={`absolute -top-3 -left-3 z-10 w-8 h-8 flex items-center justify-center font-black text-sm ${
-                      idx === 0 ? "bg-yellow-400 text-black" :
-                      idx === 1 ? "bg-gray-300 text-black" :
-                      "bg-amber-700 text-white"
-                    }`}>
-                      #{idx + 1}
-                    </div>
-                  )}
-                  <VoteCard
-                    {...item}
-                    userVote={userVotes[item.id]}
-                    isVoting={votingId === item.id}
-                    onApprove={() => handleVote(item.id, "approve")}
-                    onDisapprove={() => handleVote(item.id, "disapprove")}
-                  />
+                  
+                  
+                  {(() => {
+  (globalThis as any).__TRENDING_RANK__ =
+    idx < 3 ? idx + 1 : undefined;
+
+  return (
+      <VoteCard
+  {...item}
+  rank={idx + 1}
+  userVote={userVotes[item.id]}
+      userVote={userVotes[item.id]}
+      isVoting={votingId === item.id}
+      onApprove={() => handleVote(item.id, "approve")}
+      onDisapprove={() => handleVote(item.id, "disapprove")}
+    />
+  );
+})()}
                 </div>
               ))}
             </div>

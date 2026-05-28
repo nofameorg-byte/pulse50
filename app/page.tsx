@@ -327,6 +327,29 @@ export default function Home() {
         </div>
       </section>
 
+{/* Civic Data Expanding Notice */}
+<div className="mb-5 border border-yellow-500/40 bg-yellow-500/10 p-4 rounded-sm">
+  <div className="flex items-start gap-3">
+    <span className="text-yellow-400 text-lg">⚡</span>
+
+    <div>
+      <h3 className="text-yellow-400 font-black text-sm uppercase tracking-wider">
+        Civic Data Expanding
+      </h3>
+
+      <p className="text-yellow-200/90 text-sm leading-relaxed mt-1">
+        Pulse50 is actively expanding representative, sheriff, and local
+        government coverage across the United States. New officials and counties
+        are added regularly to improve accuracy.
+      </p>
+
+      <p className="text-yellow-300 text-xs font-semibold mt-2">
+        If your local official is missing, check back soon — updates are continuing frequently.
+      </p>
+    </div>
+  </div>
+</div>
+
       {/* ── STATS BANNER ── */}
       <section className="border-y border-white/10 bg-white/[0.02] py-14">
         <div className="mx-auto max-w-7xl px-6">
