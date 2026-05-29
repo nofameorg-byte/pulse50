@@ -339,6 +339,141 @@ async function runTavilySearch(query: string) {
     .join("\n\n");
 }
 
+const KNOWN_BILLS = {
+  "hr 1": {
+    congress: "119",
+    type: "hr",
+    number: "1",
+  },
+
+  "one big beautiful bill": {
+    congress: "119",
+    type: "hr",
+    number: "1",
+  },
+
+  "s 5": {
+    congress: "119",
+    type: "s",
+    number: "5",
+  },
+
+  "laken riley act": {
+    congress: "119",
+    type: "s",
+    number: "5",
+  },
+};
+
+function detectCongressBill(message: string) {
+  const text = message.toLowerCase();
+
+  for (const [name, bill] of Object.entries(KNOWN_BILLS)) {
+    if (text.includes(name)) {
+      return bill;
+    }
+  }
+
+  const hrMatch =
+    text.match(/\bhr\.?\s*(\d+)\b/i) ||
+    text.match(/\bh\.r\.\s*(\d+)\b/i);
+
+  if (hrMatch) {
+    return {
+      congress: "119",
+      type: "hr",
+      number: hrMatch[1],
+    };
+  }
+
+  const senateMatch =
+    text.match(/\bs\.?\s*(\d+)\b/i);
+
+  if (senateMatch) {
+    return {
+      congress: "119",
+      type: "s",
+      number: senateMatch[1],
+    };
+  }
+
+  return null;
+}
+
+async function getCongressBillContext(
+  message: string
+) {
+  try {
+    const bill = detectCongressBill(message);
+
+    if (!bill) return "";
+
+    const apiKey = process.env.CONGRESS_API_KEY;
+
+    if (!apiKey) return "";
+
+    const billResponse = await fetch(
+      `https://api.congress.gov/v3/bill/${bill.congress}/${bill.type}/${bill.number}?api_key=${apiKey}`
+    );
+
+    if (!billResponse.ok) return "";
+
+    const billData = await billResponse.json();
+
+    const summaryResponse = await fetch(
+      `https://api.congress.gov/v3/bill/${bill.congress}/${bill.type}/${bill.number}/summaries?api_key=${apiKey}`
+    );
+
+    let summaryText = "";
+
+    if (summaryResponse.ok) {
+      const summaryData = await summaryResponse.json();
+
+      summaryText =
+  (
+    summaryData?.summaries?.[0]?.text || ""
+  )
+  .replace(/<[^>]*>/g, "")
+  .slice(0, 5000);
+    }
+
+    console.log(
+  "SUMMARY LENGTH:",
+  summaryText.length
+);
+
+console.log(
+  summaryText.slice(0, 500)
+);
+
+    return `
+CONGRESS BILL DATA
+
+Title:
+${billData?.bill?.title || ""}
+
+Bill:
+${billData?.bill?.type || ""} ${billData?.bill?.number || ""}
+
+Policy Area:
+${billData?.bill?.policyArea?.name || ""}
+
+Summary:
+${summaryText}
+
+Latest Action:
+${billData?.bill?.latestAction?.text || ""}
+
+Congress:
+${billData?.bill?.congress || ""}
+`;
+  } catch (error) {
+    console.error("Congress lookup error:", error);
+    return "";
+  }
+}
+
+
 async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[]) {
   try {
     const searchMessage = buildSearchMessage(message, history);
@@ -468,9 +603,19 @@ const userId =
       combinedHistory
     );
 
-    const liveCivicContext = shouldVerifyLive
-      ? await searchLiveCivicWeb(message, combinedHistory)
-      : "";
+    const congressContext =
+  await getCongressBillContext(message);
+
+const liveCivicContext =
+  congressContext ||
+  (
+    shouldVerifyLive
+      ? await searchLiveCivicWeb(
+          message,
+          combinedHistory
+        )
+      : ""
+  );
 
     const groqMessages = [
       { role: "system" as const, content: ORIVOO_SYSTEM_PROMPT },
@@ -508,6 +653,14 @@ IMPORTANT:
 - Accuracy is more important than sounding confident.
 - Never invent civic facts.
 - Do not give a weak "check the website" answer when the provided source context already answers the question.
+
+If Congressional Summary information is provided,
+use that summary as the primary source when explaining
+the bill in plain English.
+
+Do not simply repeat the bill title.
+Explain the major provisions, impacts,
+and policy areas neutrally.
 
 SEARCH RESULTS:
 ${liveCivicContext}

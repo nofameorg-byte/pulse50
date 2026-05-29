@@ -59,47 +59,14 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   );
 }
 
-// ── Vote bar ──────────────────────────────────────────────────────────────────
-function VoteBar({ name, pct, delay }: { name: string; pct: number; delay: number }) {
-  const [width, setWidth] = useState(0);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setTimeout(() => setWidth(pct), delay * 1000);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [pct, delay]);
-
-  return (
-    <div ref={ref} className="space-y-1.5">
-      <div className="flex justify-between items-center">
-        <span className="text-sm font-semibold text-white">{name}</span>
-        <span className="text-sm font-bold text-yellow-400">{pct}%</span>
-      </div>
-      <div className="h-1.5 bg-white/10 overflow-hidden">
-        <div
-          className="h-full bg-yellow-400 transition-all ease-out"
-          style={{ width: `${width}%`, transitionDuration: "1.2s" }}
-        />
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
   const [trending, setTrending] = useState<Representative[]>([]);
   const [totalVotes, setTotalVotes] = useState(0);
   const [totalReps, setTotalReps] = useState(0);
   const [totalStates, setTotalStates] = useState(0);
+  const [totalComments, setTotalComments] = useState(0);
+  const [totalDiscussions, setTotalDiscussions] = useState(0);
 
   useEffect(() => {
     fetchTrending();
@@ -107,23 +74,41 @@ export default function Home() {
   }, []);
 
   async function fetchStats() {
+    // Total votes
     const { count: voteCount } = await supabase
       .from("user_votes")
       .select("*", { count: "exact", head: true });
 
+    // Total reps
     const { count: repCount } = await supabase
       .from("representatives")
       .select("*", { count: "exact", head: true });
 
+    // Unique states
     const { data: stateData } = await supabase
       .from("representatives")
       .select("state");
-
     const uniqueStates = new Set(stateData?.map((r) => r.state) || []);
+
+    // Total comments
+    const { count: commentCount } = await supabase
+      .from("comments")
+      .select("*", { count: "exact", head: true });
+
+    // Total discussions = distinct representative_ids that have at least one comment
+    // TODO: if a dedicated discussions table is added later, swap this query
+    const { data: discussionData } = await supabase
+      .from("comments")
+      .select("representative_id");
+    const uniqueDiscussions = new Set(
+      (discussionData || []).map((c) => c.representative_id)
+    );
 
     setTotalVotes(voteCount || 0);
     setTotalReps(repCount || 0);
     setTotalStates(uniqueStates.size);
+    setTotalComments(commentCount || 0);
+    setTotalDiscussions(uniqueDiscussions.size);
   }
 
   async function fetchTrending() {
@@ -164,28 +149,9 @@ export default function Home() {
     setTrending(updatedData);
   }
 
-  function handleSearch() {
-    if (!search.trim()) return;
-    router.push(`/representatives?search=${encodeURIComponent(search)}`);
-  }
-
-  const heroTallies = trending.slice(0, 4).map((rep) => {
-    const total = (rep.approve_count || 0) + (rep.disapprove_count || 0);
-    const pct = total > 0 ? Math.round(((rep.approve_count || 0) / total) * 100) : 0;
-    return { name: rep.name.split(" ").slice(-1)[0], pct };
-  });
-
-  // Pad with placeholders if fewer than 4
-  const defaultTallies = [
-    { name: "Loading...", pct: 0 },
-    { name: "Loading...", pct: 0 },
-    { name: "Loading...", pct: 0 },
-    { name: "Loading...", pct: 0 },
-  ];
-  const displayTallies = heroTallies.length > 0 ? heroTallies : defaultTallies;
-
   return (
     <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
+
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
@@ -193,13 +159,14 @@ export default function Home() {
             <span className="text-white">Pulse</span>
             <span className="text-yellow-400">50</span>
           </div>
-
+          {/* FIX #1 — Login button removed from desktop nav */}
           <div className="hidden items-center gap-8 md:flex">
             {[
               { label: "Home", href: "/" },
               { label: "Representatives", href: "/representatives" },
               { label: "Discussions", href: "/representatives" },
               { label: "States", href: "/representatives" },
+              { label: "Now", href: "/now" },
             ].map((item) => (
               <Link
                 key={item.label}
@@ -210,23 +177,16 @@ export default function Home() {
               </Link>
             ))}
           </div>
-
-          <button
-            onClick={() => router.push("/login")}
-            className="rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black transition hover:bg-yellow-300"
-          >
-            Login
-          </button>
         </div>
       </nav>
 
       {/* ── HERO ── */}
-      <section className="relative overflow-hidden px-6 py-28">
-        {/* Glow */}
-        <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/8 blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden px-6 py-20 md:py-28">
+        {/* Background glow */}
+        <div className="absolute left-1/2 top-1/2 h-[700px] w-[700px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400/6 blur-3xl pointer-events-none" />
         {/* Grid texture */}
         <div
-          className="absolute inset-0 pointer-events-none opacity-[0.04]"
+          className="absolute inset-0 pointer-events-none opacity-[0.03]"
           style={{
             backgroundImage:
               "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
@@ -236,138 +196,184 @@ export default function Home() {
         {/* Left accent */}
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-yellow-400" />
 
-        <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left */}
-            <div>
-              <div className="flex items-center gap-2 mb-6">
-                <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
-                <span className="text-xs font-bold uppercase tracking-widest text-yellow-400">
-                  Live Voting Open
-                </span>
+        <div className="relative z-10 mx-auto max-w-4xl flex flex-col items-center text-center">
+
+          {/* ORIVOO Logo */}
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full bg-yellow-400/20 blur-2xl scale-150 pointer-events-none" />
+            <img
+              src="/orivoo-logo.png"
+              alt="ORIVOO"
+              className="relative h-48 md:h-64 w-auto object-contain"
+              onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+            />
+          </div>
+
+          {/* Live badge */}
+          <div className="flex items-center gap-2 mb-5">
+            <span className="inline-block w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+            <span className="text-xs font-bold uppercase tracking-widest text-yellow-400">
+              Live Voting Open
+            </span>
+          </div>
+
+          {/* Main heading */}
+          <h1 className="text-7xl md:text-9xl font-black tracking-tight leading-none mb-3">
+            <span className="text-white">Pulse</span>
+            <span className="text-yellow-400">50</span>
+          </h1>
+
+          {/* Subheading */}
+          <p className="text-sm font-bold uppercase tracking-widest text-yellow-400/80 mb-3">
+            Powered by ORIVOO AI
+          </p>
+
+          {/* Tagline */}
+          <p className="text-gray-400 text-lg font-medium mb-10">
+            Track. Learn. Participate.
+          </p>
+
+          {/* FIX #2 — Hero stats wired to real Supabase data (totalReps, totalStates) */}
+          <div className="flex items-center gap-10 mb-10">
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-4xl font-black text-yellow-400">
+                <AnimatedCounter target={totalReps} />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                Representatives Tracked
+              </span>
+            </div>
+            <div className="w-px h-10 bg-white/10" />
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-4xl font-black text-yellow-400">
+                <AnimatedCounter target={totalStates} />
+              </span>
+              <span className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                States Covered
+              </span>
+            </div>
+          </div>
+
+         {/* Buttons */}
+<div className="flex justify-center mb-14">
+  <button
+    onClick={() => router.push("/login")}
+    className="px-10 py-4 bg-yellow-400 text-black font-black text-sm uppercase tracking-wider hover:bg-yellow-300 transition"
+  >
+    Get Started
+  </button>
+</div>
+
+          {/* Feature cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full text-left">
+
+            {/* Card 1 — Representatives */}
+            <div className="border border-white/10 bg-white/[0.02] hover:border-yellow-400/50 transition p-6 flex flex-col gap-4 group">
+              <div className="text-3xl">🏛</div>
+              <div>
+                <h3 className="text-white font-black text-lg mb-1">Representatives</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Find and track public officials across America.
+                </p>
               </div>
-
-              <h1 className="text-7xl md:text-8xl font-black tracking-tight leading-none mb-6">
-                <span className="text-white">THE</span>
-                <br />
-                <span className="text-white">PUBLIC</span>
-                <br />
-                <span className="text-yellow-400">PULSE.</span>
-              </h1>
-
-              <p className="text-gray-400 text-lg leading-relaxed max-w-md mb-4">
-                Track approval, public opinion, and community discussion surrounding
-                politicians, representatives, and law enforcement across all 50 states.
-              </p>
-
-              {/* Search */}
-              <div className="flex flex-col sm:flex-row gap-3 mt-8 mb-6">
-                <input
-                  type="text"
-                  placeholder="Search by state, representative, ZIP code..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  className="flex-1 h-14 bg-white/5 border border-white/10 px-5 text-white placeholder-gray-500 outline-none focus:border-yellow-400 transition text-sm"
-                />
-                <button
-                  onClick={handleSearch}
-                  className="h-14 px-8 bg-yellow-400 text-black font-black text-sm uppercase tracking-wider hover:bg-yellow-300 transition"
-                >
-                  Search
-                </button>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <button
-                  onClick={() => router.push("/representatives")}
-                  className="px-8 py-4 bg-yellow-400 text-black font-black text-sm uppercase tracking-wider hover:bg-yellow-300 transition"
-                >
-                  Enter Pulse50
-                </button>
-                <button
-                  onClick={() => router.push("/representatives")}
-                  className="px-8 py-4 border border-white/20 text-white font-bold text-sm uppercase tracking-wider hover:border-yellow-400 hover:text-yellow-400 transition"
-                >
-                  Explore Representatives
-                </button>
-              </div>
+              <button
+                onClick={() => router.push("/representatives")}
+                className="mt-auto w-full py-3 border border-yellow-400/40 text-yellow-400 font-black text-xs uppercase tracking-wider hover:bg-yellow-400 hover:text-black transition"
+              >
+                Explore Representatives
+              </button>
             </div>
 
-            {/* Right: Live tally panel */}
-            <div className="bg-white/5 border border-white/10 p-6 relative">
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                  Live Approval Ratings
-                </h2>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 animate-pulse" />
-                  <span className="text-xs text-yellow-400 font-bold">LIVE</span>
-                </div>
+            {/* Card 2 — Pulse50 Now */}
+            <div className="border border-white/10 bg-white/[0.02] hover:border-yellow-400/50 transition p-6 flex flex-col gap-4 group">
+              <div className="text-3xl">📰</div>
+              <div>
+                <h3 className="text-white font-black text-lg mb-1">Pulse50 Now</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Follow civic media, hearings, public events, and community coverage.
+                </p>
               </div>
-
-              <div className="space-y-5">
-                {displayTallies.map((item, i) => (
-                  <VoteBar key={item.name + i} name={item.name} pct={item.pct} delay={0.3 + i * 0.15} />
-                ))}
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
-                <span className="text-xs text-gray-500">Updated in real-time</span>
-                <Link
-                  href="/representatives"
-                  className="text-xs font-bold text-yellow-400 hover:underline"
-                >
-                  See all →
-                </Link>
-              </div>
+              <button
+                onClick={() => router.push("/now")}
+                className="mt-auto w-full py-3 border border-yellow-400/40 text-yellow-400 font-black text-xs uppercase tracking-wider hover:bg-yellow-400 hover:text-black transition"
+              >
+                Open Pulse50 Now
+              </button>
             </div>
+
+           {/* Card 3 — Public Pulse */}
+<div className="border border-yellow-400/20 bg-yellow-400/[0.03] hover:border-yellow-400/60 transition p-6 flex flex-col gap-4 group relative overflow-hidden">
+  <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400/40 group-hover:bg-yellow-400 transition" />
+  <div className="text-3xl">📊</div>
+  <div>
+    <h3 className="text-white font-black text-lg mb-1">Public Pulse</h3>
+    <p className="text-gray-400 text-sm leading-relaxed">
+      See what America is talking about right now. Track trending politicians, approval ratings, public discussions, civic engagement, and real-time activity across the platform.
+    </p>
+  </div>
+  <button
+    onClick={() => router.push("/trending")}
+    className="mt-auto w-full py-3 bg-yellow-400/10 border border-yellow-400/40 text-yellow-400 font-black text-xs uppercase tracking-wider hover:bg-yellow-400 hover:text-black transition"
+  >
+    Open Public Pulse
+  </button>
+</div>
+
           </div>
         </div>
       </section>
 
-{/* Civic Data Expanding Notice */}
-<div className="mb-5 border border-yellow-500/40 bg-yellow-500/10 p-4 rounded-sm">
-  <div className="flex items-start gap-3">
-    <span className="text-yellow-400 text-lg">⚡</span>
-
-    <div>
-      <h3 className="text-yellow-400 font-black text-sm uppercase tracking-wider">
-        Civic Data Expanding
-      </h3>
-
-      <p className="text-yellow-200/90 text-sm leading-relaxed mt-1">
-        Pulse50 is actively expanding representative, sheriff, and local
-        government coverage across the United States. New officials and counties
-        are added regularly to improve accuracy.
-      </p>
-
-      <p className="text-yellow-300 text-xs font-semibold mt-2">
-        If your local official is missing, check back soon — updates are continuing frequently.
-      </p>
-    </div>
-  </div>
-</div>
+      {/* ── CIVIC DATA EXPANDING NOTICE ── */}
+      <div className="mx-auto max-w-7xl px-6 mb-5">
+        <div className="border border-yellow-500/40 bg-yellow-500/10 p-4 rounded-sm">
+          <div className="flex items-start gap-3">
+            <span className="text-yellow-400 text-lg">⚡</span>
+            <div>
+              <h3 className="text-yellow-400 font-black text-sm uppercase tracking-wider">
+                Civic Data Expanding
+              </h3>
+              <p className="text-yellow-200/90 text-sm leading-relaxed mt-1">
+                Pulse50 is actively expanding representative, sheriff, and local
+                government coverage across the United States. New officials and counties
+                are added regularly to improve accuracy.
+              </p>
+              <p className="text-yellow-300 text-xs font-semibold mt-2">
+                If your local official is missing, check back soon — updates are continuing frequently.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* ── STATS BANNER ── */}
+      {/* FIX #3 — replaced Politicians Tracked + States Represented with Comments Posted + Discussions Created */}
       <section className="border-y border-white/10 bg-white/[0.02] py-14">
         <div className="mx-auto max-w-7xl px-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-            {[
-              { value: totalVotes, suffix: "+", label: "Total Votes Cast" },
-              { value: totalReps, suffix: "", label: "Politicians Tracked" },
-              { value: totalStates, suffix: "", label: "States Represented" },
-            ].map(({ value, suffix, label }) => (
-              <div key={label} className="flex flex-col items-center gap-2">
-                <div className="text-6xl font-black text-yellow-400">
-                  <AnimatedCounter target={value} suffix={suffix} />
-                </div>
-                <div className="text-xs font-bold uppercase tracking-widest text-gray-500">
-                  {label}
-                </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="text-6xl font-black text-yellow-400">
+                <AnimatedCounter target={totalVotes} suffix="+" />
               </div>
-            ))}
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                Total Votes Cast
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="text-6xl font-black text-yellow-400">
+                <AnimatedCounter target={totalComments} />
+              </div>
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                Comments Posted
+              </div>
+            </div>
+            <div className="flex flex-col items-center gap-2">
+              <div className="text-6xl font-black text-yellow-400">
+                <AnimatedCounter target={totalDiscussions} />
+              </div>
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-500">
+                Discussions Created
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -388,7 +394,6 @@ export default function Home() {
                 Public approval and discussion happening right now.
               </p>
             </div>
-
             <Link
               href="/representatives"
               className="inline-block border border-yellow-400 px-6 py-3 text-sm font-bold text-yellow-400 transition hover:bg-yellow-400 hover:text-black"
@@ -397,7 +402,6 @@ export default function Home() {
             </Link>
           </div>
 
-          {/* Slider */}
           <div className="relative">
             <div
               className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
@@ -415,10 +419,7 @@ export default function Home() {
                     key={rep.id}
                     className="snap-start shrink-0 w-[85vw] sm:w-[360px] lg:w-[340px] border border-white/10 bg-white/[0.02] p-6 relative group hover:border-yellow-400 transition flex flex-col"
                   >
-                    {/* Gold top accent line */}
                     <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-
-                    {/* Tags row */}
                     <div className="flex items-center gap-2 mb-5 flex-wrap">
                       <span className="bg-yellow-400 text-black text-xs font-black px-3 py-1 uppercase tracking-wider">
                         {rep.category}
@@ -427,12 +428,8 @@ export default function Home() {
                         {rep.state}
                       </span>
                     </div>
-
-                    {/* Name & title */}
                     <h3 className="text-2xl font-black text-white leading-tight">{rep.name}</h3>
                     <p className="text-gray-400 mt-1 text-sm mb-6">{rep.title}</p>
-
-                    {/* Approval bar */}
                     <div className="mb-2">
                       <div className="flex justify-between items-center mb-2">
                         <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Approval Rating</span>
@@ -450,8 +447,6 @@ export default function Home() {
                         </span>
                       </div>
                     </div>
-
-                    {/* Discussions + Share row */}
                     <div className="flex items-center justify-between border-t border-white/10 pt-4 mt-5 mb-5">
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Discussions</span>
@@ -459,8 +454,6 @@ export default function Home() {
                       </div>
                       <ShareMenu url={`/representatives/${rep.id}`} title={rep.name} stats={statsText} />
                     </div>
-
-                    {/* Vote buttons */}
                     <div className="flex gap-3 mt-auto">
                       <button
                         onClick={() => router.push(`/representatives/${rep.id}`)}
@@ -475,8 +468,6 @@ export default function Home() {
                         Disapprove
                       </button>
                     </div>
-
-                    {/* View Discussion */}
                     <Link
                       href={`/representatives/${rep.id}`}
                       className="mt-3 block w-full border border-white/10 py-3 text-center text-sm font-bold text-white hover:border-yellow-400 hover:text-yellow-400 transition"
@@ -487,7 +478,6 @@ export default function Home() {
                 );
               })}
             </div>
-            {/* Scroll hint fade */}
             <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-black to-transparent pointer-events-none" />
           </div>
         </div>
@@ -520,10 +510,7 @@ export default function Home() {
                 desc: "Watch live tallies update in real time. Track trends, compare candidates, and share the data.",
               },
             ].map(({ num, title, desc }, i) => (
-              <div
-                key={num}
-                className={`p-10 ${i < 2 ? "border-r border-white/10" : ""}`}
-              >
+              <div key={num} className={`p-10 ${i < 2 ? "border-r border-white/10" : ""}`}>
                 <div className="text-8xl font-black text-yellow-400/15 leading-none mb-4 select-none">
                   {num}
                 </div>
@@ -613,22 +600,20 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-6 flex flex-col md:flex-row justify-between items-center gap-4">
-  <p className="text-xs text-gray-600">
-    © {new Date().getFullYear()} Pulse50. Not affiliated with any political party or
-    government entity.
-  </p>
-
-  <p className="text-xs text-gray-600">
-    Pulse50 is a public opinion platform and does not represent official election results.
-  </p>
-
-  <Link
-    href="/admin"
-    className="text-gray-800 hover:text-yellow-400 transition text-xs"
-  >
-    🔒
-  </Link>
-</div>
+            <p className="text-xs text-gray-600">
+              © {new Date().getFullYear()} Pulse50. Not affiliated with any political party or
+              government entity.
+            </p>
+            <p className="text-xs text-gray-600">
+              Pulse50 is a public opinion platform and does not represent official election results.
+            </p>
+            <Link
+              href="/admin"
+              className="text-gray-800 hover:text-yellow-400 transition text-xs"
+            >
+              🔒
+            </Link>
+          </div>
         </div>
       </footer>
       <MobileNav />

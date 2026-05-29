@@ -91,7 +91,7 @@ export default function StatesPage() {
             <Link href="/states" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">States</Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login" className="hidden md:block rounded-full bg-yellow-400 px-5 py-2 text-sm font-black text-black hover:bg-yellow-300 transition">Login</Link>
+            
             <button className="md:hidden p-2 text-gray-400" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen
@@ -107,7 +107,7 @@ export default function StatesPage() {
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
             <Link href="/states" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">States</Link>
-            <Link href="/login" className="block w-full text-center bg-yellow-400 text-black font-black py-3 text-sm uppercase tracking-wider mt-2">Login</Link>
+            
           </div>
         )}
       </nav>

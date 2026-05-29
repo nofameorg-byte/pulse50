@@ -80,6 +80,27 @@ const NAV_ITEMS = [
       </svg>
     ),
   },
+
+{
+  href: "/now",
+  label: "Now",
+  icon: (active: boolean) => (
+    <svg
+      className={`w-5 h-5 transition-colors ${active ? "text-yellow-400" : "text-gray-500"}`}
+      fill={active ? "currentColor" : "none"}
+      stroke="currentColor"
+      strokeWidth={active ? 0 : 2}
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13 10V3L4 14h7v7l9-11h-7z"
+      />
+    </svg>
+  ),
+},
+
   {
     href: "/login",
     label: "Account",
