@@ -20,39 +20,43 @@ interface Representative {
 }
 
 // ── Animated counter ──────────────────────────────────────────────────────────
-function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: string }) {
+function AnimatedCounter({
+  target,
+  suffix = "",
+}: {
+  target: number;
+  suffix?: string;
+}) {
   const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const started = useRef(false);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting && !started.current) {
-          started.current = true;
-          const duration = 1800;
-          const steps = 60;
-          const increment = target / steps;
-          let current = 0;
-          const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-              setCount(target);
-              clearInterval(timer);
-            } else {
-              setCount(Math.floor(current));
-            }
-          }, duration / steps);
-        }
-      },
-      { threshold: 0.3 }
-    );
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
+    if (target <= 0) {
+      setCount(0);
+      return;
+    }
+
+    const duration = 1800;
+    const steps = 60;
+    const increment = target / steps;
+
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += increment;
+
+      if (current >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(current));
+      }
+    }, duration / steps);
+
+    return () => clearInterval(timer);
   }, [target]);
 
   return (
-    <span ref={ref}>
+    <span>
       {count.toLocaleString()}
       {suffix}
     </span>
@@ -260,7 +264,7 @@ export default function Home() {
     onClick={() => router.push("/login")}
     className="px-10 py-4 bg-yellow-400 text-black font-black text-sm uppercase tracking-wider hover:bg-yellow-300 transition"
   >
-    Get Started
+    Vote & Join the Discussion
   </button>
 </div>
 
