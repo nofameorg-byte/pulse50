@@ -22,31 +22,31 @@ export default function AccountSettingsPage() {
   }, []);
 
   async function loadProfile() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { router.push("/login"); return; }
-    setUserId(user.id);
-const {
-  data: { user },
-} = await supabase.auth.getUser();
+  const {
+    data: { user: authUser },
+  } = await supabase.auth.getUser();
 
-if (!user) {
+  if (!authUser) {
+    router.push("/login");
+    return;
+  }
+
+  setUserId(authUser.id);
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", authUser.id)
+    .single();
+
+  if (profile) {
+    setUsername(profile.username || "");
+    setBio(profile.bio || "");
+    setState(profile.state || "");
+  }
+
   setLoading(false);
-  return;
 }
-
-const { data: profile } = await supabase
-  .from("profiles")
-  .select("*")
-  .eq("id", user.id)
-  .single();
-
-if (profile) {
-  setUsername(profile.username || "");
-  setBio(profile.bio || "");
-  setState(profile.state || "");
-}
-
-setLoading(false);
 
   async function saveProfile() {
     if (!userId) return;
