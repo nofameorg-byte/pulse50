@@ -50,7 +50,7 @@ export default function RepresentativeProfile() {
   const [currentUser, setCurrentUser] = useState<{ id: string } | null>(null);
   const [posting, setPosting] = useState(false);
   const [voting, setVoting] = useState(false);
-  const [reportedIds, setReportedIds] = useState<Set<number>>(new Set());
+  const [reportedIds, setReportedIds] = useState<Set<string>>(new Set());
   const [reportingId, setReportingId] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Reply state
