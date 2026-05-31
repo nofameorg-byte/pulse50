@@ -274,13 +274,13 @@ export default function AdminPage() {
   }
 
   async function deleteVideo(id: string) {
-    if (!confirm("Delete this video permanently?")) return;
-    await supabase.from("civic_videos").delete().eq("id", id);
-    flash("Video deleted.");
-    fetchVideos();
-  }
+  if (!confirm("Delete this video permanently?")) return;
+  await supabase.from("civic_videos").delete().eq("id", id);
+  flash("Video deleted.");
+  fetchVideos();
+}
 
-  async function toggleEnabled(v: CivicVideo) {
+async function toggleEnabled(v: CivicVideo) {
   console.log("DISABLE BUTTON CLICKED");
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -300,10 +300,34 @@ export default function AdminPage() {
   fetchVideos();
 }
 
-  function flash(msg: string) {
-    setActionMsg(msg);
-    setTimeout(() => setActionMsg(""), 3000);
-  }
+async function moveVideo(v: CivicVideo, direction: "up" | "down") {
+  const sorted = [...videos].sort((a, b) => a.position - b.position);
+  const idx = sorted.findIndex((x) => x.id === v.id);
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+
+  if (swapIdx < 0 || swapIdx >= sorted.length) return;
+
+  const other = sorted[swapIdx];
+
+  await Promise.all([
+    supabase
+      .from("civic_videos")
+      .update({ position: other.position })
+      .eq("id", v.id),
+
+    supabase
+      .from("civic_videos")
+      .update({ position: v.position })
+      .eq("id", other.id),
+  ]);
+
+  fetchVideos();
+}
+
+function flash(msg: string) {
+  setActionMsg(msg);
+  setTimeout(() => setActionMsg(""), 3000);
+}
 
   // ── Guard ─────────────────────────────────────────────────────────────────
   if (!isAdmin) {
