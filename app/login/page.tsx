@@ -89,16 +89,16 @@ export default function LoginPage() {
 
       if (data.user) {
         // Generate civic identity from state
-        const { civic_name, state, state_abbr } = generateCivicIdentity(selectedState);
-
-        await supabase.from("profiles").insert({
-          id: data.user.id,
-          civic_name,
-          state,
-          state_abbr,
-          is_admin: false,
-          banned: false,
-        });
+        const { civicName, state, stateAbbr } =
+  generateCivicIdentity(selectedState);
+await supabase.from("profiles").insert({
+  id: data.user.id,
+  civic_name: civicName,
+  state,
+  state_abbr: stateAbbr,
+  is_admin: false,
+  banned: false,
+});
       }
 
       setSuccess("Account created! Check your email to confirm, then log in.");
