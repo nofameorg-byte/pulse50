@@ -23,13 +23,14 @@ interface Representative {
 }
 
 interface Comment {
-  id: number;
+  id: string;
   content: string;
   created_at: string;
   user_id: string;
-  parent_id: number | null;
+  parent_id: string | null;
   reported?: boolean;
-  profiles: { username: string };
+  // Civic identity — replaces username
+  profiles: { civic_name: string; state_abbr: string };
   like_count?: number;
   user_liked?: boolean;
   replies?: Comment[];
@@ -53,12 +54,12 @@ export default function RepresentativeProfile() {
   const [reportingId, setReportingId] = useState<number | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   // Reply state
-  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState("");
   const [postingReply, setPostingReply] = useState(false);
   // Like state
-  const [likedIds, setLikedIds] = useState<Set<number>>(new Set());
-  const [likeCounts, setLikeCounts] = useState<Record<number, number>>({});
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [likeCounts, setLikeCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     if (!representativeId) return;
@@ -108,26 +109,36 @@ export default function RepresentativeProfile() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Fetch profiles + likes for all comments in parallel
+    // Fetch civic identity + likes for all comments in parallel
     const withData = await Promise.all(
       commentsData.map(async (comment) => {
         const [profileRes, likeCountRes, userLikeRes] = await Promise.all([
-          supabase.from("profiles").select("username").eq("id", comment.user_id).single(),
+          // Fetch civic_name and state_abbr instead of username
+          supabase.from("profiles").select("civic_name,state_abbr").eq("id", comment.user_id).single(),
           supabase.from("comment_likes").select("*", { count: "exact", head: true }).eq("comment_id", comment.id),
           user
-            ? supabase.from("comment_likes").select("id").eq("comment_id", comment.id).eq("user_id", user.id).single()
+        
+             ? supabase
+      .from("comment_likes")
+      .select("id")
+      .eq("comment_id", comment.id)
+      .eq("user_id", user.id)
+      .maybeSingle()
             : Promise.resolve({ data: null }),
         ]);
         return {
           ...comment,
-          profiles: { username: profileRes.data?.username || "Citizen" },
+          profiles: {
+            civic_name: profileRes.data?.civic_name || "Citizen",
+            state_abbr: profileRes.data?.state_abbr || "US",
+          },
           like_count: likeCountRes.count || 0,
           user_liked: !!userLikeRes.data,
         };
       })
     );
 
-    // Build threaded structure: top-level comments with replies nested
+    // Build threaded structure
     const topLevel = withData.filter((c) => !c.parent_id);
     const threaded = topLevel.map((c) => ({
       ...c,
@@ -135,8 +146,8 @@ export default function RepresentativeProfile() {
     }));
 
     // Update like state maps
-    const newLikedIds = new Set<number>();
-    const newLikeCounts: Record<number, number> = {};
+    const newLikedIds = new Set<string>();
+    const newLikeCounts: Record<string, number> = {};
     withData.forEach((c) => {
       newLikeCounts[c.id] = c.like_count || 0;
       if (c.user_liked) newLikedIds.add(c.id);
@@ -147,11 +158,18 @@ export default function RepresentativeProfile() {
     setComments(threaded);
   }
 
+  // ensureProfile no longer creates usernames — civic identity is set at signup
   async function ensureProfile(userId: string) {
-    const { data } = await supabase.from("profiles").select("*").eq("id", userId).single();
+    const { data } = await supabase.from("profiles").select("id").eq("id", userId).single();
     if (data) return;
-    const anonymousName = "Citizen" + Math.floor(100000 + Math.random() * 900000);
-    await supabase.from("profiles").insert({ id: userId, username: anonymousName });
+    // Profile missing — insert a minimal fallback (civic identity assigned at signup)
+    await supabase.from("profiles").insert({
+      id: userId,
+      civic_name: "Citizen",
+      state_abbr: "US",
+      is_admin: false,
+      banned: false,
+    });
   }
 
   async function handleVote(voteType: string) {
@@ -172,7 +190,6 @@ export default function RepresentativeProfile() {
     setVoting(false);
     fetchRepresentative();
 
-    // ── Notification triggers (fire-and-forget) ──
     if (representative) {
       const newTotal = approvalCount + disapprovalCount + 1;
       triggerVoteMilestone(representativeId, representative.name, newTotal);
@@ -185,7 +202,6 @@ export default function RepresentativeProfile() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
 
-    // Basic spam check — no duplicate consecutive posts
     const lastComment = comments[0];
     if (lastComment && lastComment.user_id === user.id && lastComment.content === commentText.trim()) {
       alert("You already posted that comment.");
@@ -207,13 +223,12 @@ export default function RepresentativeProfile() {
     setPosting(false);
     fetchComments();
 
-    // ── Notify other commenters (fire-and-forget) ──
     if (representative) {
       triggerReplyNotifications(representativeId, representative.name, user.id);
     }
   }
 
-  async function reportComment(commentId: number) {
+  async function reportComment(commentId: string) {
     if (reportedIds.has(commentId)) return;
     setReportingId(commentId);
 
@@ -227,7 +242,7 @@ export default function RepresentativeProfile() {
     setReportingId(null);
   }
 
-  async function postReply(parentId: number) {
+  async function postReply(parentId: string) {
     if (!replyText.trim()) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
@@ -254,7 +269,7 @@ export default function RepresentativeProfile() {
     }
   }
 
-  async function toggleLike(commentId: number) {
+  async function toggleLike(commentId: string) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
 
@@ -309,7 +324,6 @@ export default function RepresentativeProfile() {
             <span className="text-white">Pulse</span>
             <span className="text-yellow-400">50</span>
           </Link>
-
           <div className="hidden md:flex items-center gap-6">
             <Link href="/representatives" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">
               ← Directory
@@ -321,9 +335,7 @@ export default function RepresentativeProfile() {
               States
             </Link>
           </div>
-
           <div className="flex items-center gap-3">
-
             <button className="md:hidden p-2 text-gray-400" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen
@@ -339,7 +351,6 @@ export default function RepresentativeProfile() {
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">← Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
             <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">States</Link>
-           
           </div>
         )}
       </nav>
@@ -349,7 +360,6 @@ export default function RepresentativeProfile() {
         {/* ── PROFILE CARD ── */}
         <div className="border border-white/10 bg-white/[0.02] relative mb-6">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
-
           <div className="p-6 md:p-8">
             {/* Tags + share row */}
             <div className="flex items-start justify-between gap-4 mb-5">
@@ -466,7 +476,6 @@ export default function RepresentativeProfile() {
         {/* ── DISCUSSION ── */}
         <div className="border border-white/10 bg-white/[0.02] relative">
           <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
-
           <div className="p-6 md:p-8">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl md:text-4xl font-black text-white">Discussion</h2>
@@ -489,11 +498,7 @@ export default function RepresentativeProfile() {
                     {commentText.length}/500 · Be respectful
                   </span>
                   <div className="flex items-center gap-3">
-                    <ShareMenu
-                      url={profileUrl}
-                      title={representative.name}
-                      stats={statsText}
-                    />
+                    <ShareMenu url={profileUrl} title={representative.name} stats={statsText} />
                     <button
                       onClick={postComment}
                       disabled={posting || !commentText.trim()}
@@ -576,26 +581,26 @@ export default function RepresentativeProfile() {
   );
 }
 
-// ─── CommentThread ────────────────────────────────────────────────────────────
+// ─── CommentThread ─────────────────────────────────────────────────────────────
 
 interface CommentThreadProps {
   comment: Comment;
   currentUser: { id: string } | null;
   representative: { name: string } | null;
   profileUrl: string;
-  reportedIds: Set<number>;
-  reportingId: number | null;
-  likedIds: Set<number>;
-  likeCounts: Record<number, number>;
-  replyingTo: number | null;
+  reportedIds: Set<string>;
+  reportingId: string | null;
+  likedIds: Set<string>;
+  likeCounts: Record<string, number>;
+  replyingTo: string | null;
   replyText: string;
   postingReply: boolean;
-  onReport: (id: number) => void;
-  onToggleLike: (id: number) => void;
-  onReplyStart: (id: number) => void;
+  onReport: (id: string) => void;
+  onToggleLike: (id: string) => void;
+  onReplyStart: (id: string) => void;
   onReplyCancel: () => void;
   onReplyTextChange: (text: string) => void;
-  onReplySubmit: (parentId: number) => void;
+  onReplySubmit: (parentId: string) => void;
   isReply?: boolean;
 }
 
@@ -611,6 +616,11 @@ function CommentThread({
   const likeCount = likeCounts[comment.id] || 0;
   const showReplyBox = replyingTo === comment.id;
 
+  // Civic identity display: "SC • Beacon4821"
+  const civicDisplay = `${comment.profiles?.state_abbr || "US"} • ${comment.profiles?.civic_name || "Citizen"}`;
+  // Avatar initial from state_abbr
+  const avatarInitial = (comment.profiles?.state_abbr || "US")[0].toUpperCase();
+
   return (
     <div className={isReply ? "ml-8 mt-2" : ""}>
       <div className={`border bg-black p-4 hover:border-white/20 transition group ${
@@ -620,13 +630,10 @@ function CommentThread({
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="flex items-center gap-2 flex-wrap">
             <div className="w-6 h-6 bg-yellow-400/20 border border-yellow-400/30 flex items-center justify-center shrink-0">
-              <span className="text-yellow-400 text-xs font-black">
-                {(comment.profiles?.username || "C")[0].toUpperCase()}
-              </span>
+              <span className="text-yellow-400 text-xs font-black">{avatarInitial}</span>
             </div>
-            <span className="text-yellow-400 font-bold text-sm">
-              @{comment.profiles?.username || "Citizen"}
-            </span>
+            {/* Civic identity badge */}
+            <span className="text-yellow-400 font-bold text-sm">{civicDisplay}</span>
             {isReply && (
               <span className="text-gray-700 text-xs font-bold uppercase tracking-wider">↩ reply</span>
             )}
@@ -643,7 +650,7 @@ function CommentThread({
               url={profileUrl}
               title={representative?.name || ""}
               commentText={comment.content}
-              username={comment.profiles?.username}
+              username={civicDisplay}
             />
             <button
               onClick={() => onReport(comment.id)}
@@ -666,7 +673,6 @@ function CommentThread({
 
         {/* Like + Reply row */}
         <div className="flex items-center gap-4 pl-8">
-          {/* Like button */}
           <button
             onClick={() => onToggleLike(comment.id)}
             className={`flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider transition ${
@@ -679,7 +685,6 @@ function CommentThread({
             <span>{likeCount > 0 ? likeCount : "Helpful"}</span>
           </button>
 
-          {/* Reply button — only on top-level comments */}
           {!isReply && currentUser && (
             <button
               onClick={() => showReplyBox ? onReplyCancel() : onReplyStart(comment.id)}
@@ -700,7 +705,7 @@ function CommentThread({
           <textarea
             value={replyText}
             onChange={(e) => onReplyTextChange(e.target.value.slice(0, 500))}
-            placeholder={`Replying to @${comment.profiles?.username || "Citizen"}...`}
+            placeholder={`Replying to ${civicDisplay}...`}
             className="w-full bg-black border border-white/10 px-3 py-3 text-white placeholder-gray-600 h-20 outline-none focus:border-yellow-400 transition text-sm resize-none"
             autoFocus
           />

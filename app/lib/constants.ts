@@ -49,3 +49,17 @@ export const STATE_ABBR: Record<string, string> = {
   "Texas":"TX","Utah":"UT","Vermont":"VT","Virginia":"VA","Washington":"WA",
   "West Virginia":"WV","Wisconsin":"WI","Wyoming":"WY","Washington D.C.":"DC",
 };
+
+
+export const CIVIC_WORDS = [
+  "Beacon",
+  "Liberty",
+  "Citizen",
+  "Signal",
+  "Summit",
+  "Atlas",
+  "Union",
+  "Horizon",
+  "Torch",
+  "Pulse",
+] as const;

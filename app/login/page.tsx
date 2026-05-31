@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
+import { generateCivicIdentity } from "../lib/civicIdentity";
+import { US_STATES } from "../lib/constants";
 
 const attempts: number[] = [];
 
@@ -25,7 +27,7 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
+  const [selectedState, setSelectedState] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -44,6 +46,7 @@ export default function LoginPage() {
     setError("");
     setSuccess("");
 
+    // Bot trap
     if (honeypot) return;
 
     if (isRateLimited()) {
@@ -65,33 +68,10 @@ export default function LoginPage() {
 
     setLoading(true);
 
+    // ── SIGNUP ──────────────────────────────────────────────────────────────
     if (mode === "signup") {
-      if (!username.trim()) {
-        setError("Please choose a username.");
-        setLoading(false);
-        return;
-      }
-
-      if (username.length < 3) {
-        setError("Username must be at least 3 characters.");
-        setLoading(false);
-        return;
-      }
-
-      if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-        setError("Username can only contain letters, numbers, and underscores.");
-        setLoading(false);
-        return;
-      }
-
-      const { data: existing } = await supabase
-        .from("profiles")
-        .select("id")
-        .eq("username", username)
-        .single();
-
-      if (existing) {
-        setError("That username is already taken.");
+      if (!selectedState) {
+        setError("Please select your state.");
         setLoading(false);
         return;
       }
@@ -108,9 +88,14 @@ export default function LoginPage() {
       }
 
       if (data.user) {
+        // Generate civic identity from state
+        const { civic_name, state, state_abbr } = generateCivicIdentity(selectedState);
+
         await supabase.from("profiles").insert({
           id: data.user.id,
-          username,
+          civic_name,
+          state,
+          state_abbr,
           is_admin: false,
           banned: false,
         });
@@ -122,6 +107,7 @@ export default function LoginPage() {
       return;
     }
 
+    // ── LOGIN ───────────────────────────────────────────────────────────────
     const { data, error: loginError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -171,19 +157,15 @@ export default function LoginPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-2">
               {mode === "login" ? "Welcome back" : "Join Pulse50"}
             </p>
-
             <h1 className="text-5xl font-black text-white leading-none">
               {mode === "login" ? "SIGN IN" : "CREATE\nACCOUNT"}
             </h1>
           </div>
 
+          {/* Mode toggle */}
           <div className="flex border border-white/10 mb-8">
             <button
-              onClick={() => {
-                setMode("login");
-                setError("");
-                setSuccess("");
-              }}
+              onClick={() => { setMode("login"); setError(""); setSuccess(""); }}
               className={`flex-1 py-3 text-sm font-black uppercase tracking-wider transition ${
                 mode === "login"
                   ? "bg-yellow-400 text-black"
@@ -192,13 +174,8 @@ export default function LoginPage() {
             >
               Login
             </button>
-
             <button
-              onClick={() => {
-                setMode("signup");
-                setError("");
-                setSuccess("");
-              }}
+              onClick={() => { setMode("signup"); setError(""); setSuccess(""); }}
               className={`flex-1 py-3 text-sm font-black uppercase tracking-wider transition ${
                 mode === "signup"
                   ? "bg-yellow-400 text-black"
@@ -222,6 +199,7 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Honeypot — hidden from real users */}
             <input
               type="text"
               value={honeypot}
@@ -229,40 +207,36 @@ export default function LoginPage() {
               tabIndex={-1}
               autoComplete="off"
               aria-hidden="true"
-              style={{
-                position: "absolute",
-                left: "-9999px",
-                opacity: 0,
-                height: 0,
-              }}
+              style={{ position: "absolute", left: "-9999px", opacity: 0, height: 0 }}
             />
 
+            {/* State dropdown — signup only */}
             {mode === "signup" && (
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
-                  Username
+                  Your State
                 </label>
-
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="citizen_name"
-                  autoComplete="username"
-                  className="w-full bg-black border border-white/10 px-4 py-4 text-white placeholder-gray-600 outline-none focus:border-yellow-400 transition text-sm"
-                />
-
+                <select
+                  value={selectedState}
+                  onChange={(e) => setSelectedState(e.target.value)}
+                  className="w-full bg-black border border-white/10 px-4 py-4 text-white outline-none focus:border-yellow-400 transition text-sm appearance-none"
+                >
+                  <option value="" disabled>Select your state...</option>
+                  {US_STATES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
                 <p className="text-xs text-gray-600 mt-1">
-                  Letters, numbers, underscores only.
+                  Your civic identity will be generated from your state.
                 </p>
               </div>
             )}
 
+            {/* Email */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
                 Email
               </label>
-
               <input
                 ref={emailRef}
                 type="email"
@@ -274,25 +248,20 @@ export default function LoginPage() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">
                 Password
               </label>
-
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={
-                    mode === "signup" ? "Min. 8 characters" : "••••••••"
-                  }
-                  autoComplete={
-                    mode === "signup" ? "new-password" : "current-password"
-                  }
+                  placeholder={mode === "signup" ? "Min. 8 characters" : "••••••••"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   className="w-full bg-black border border-white/10 px-4 py-4 pr-12 text-white placeholder-gray-600 outline-none focus:border-yellow-400 transition text-sm"
                 />
-
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -309,22 +278,15 @@ export default function LoginPage() {
               className="w-full bg-yellow-400 hover:bg-yellow-300 text-black font-black py-4 text-sm uppercase tracking-wider transition disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading
-                ? mode === "login"
-                  ? "Signing in..."
-                  : "Creating account..."
-                : mode === "login"
-                ? "Sign In"
-                : "Create Account"}
+                ? mode === "login" ? "Signing in..." : "Creating account..."
+                : mode === "login" ? "Sign In" : "Create Account"}
             </button>
           </form>
 
           {mode === "login" && (
             <p className="text-center text-xs text-gray-600 mt-6">
               Forgot your password?{" "}
-              <Link
-                href="/reset-password"
-                className="text-yellow-400 hover:underline font-bold"
-              >
+              <Link href="/reset-password" className="text-yellow-400 hover:underline font-bold">
                 Reset it
               </Link>
             </p>

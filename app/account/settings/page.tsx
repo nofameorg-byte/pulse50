@@ -25,17 +25,28 @@ export default function AccountSettingsPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/login"); return; }
     setUserId(user.id);
+const {
+  data: { user },
+} = await supabase.auth.getUser();
 
-    const { data: profile } = await supabase
-      .from("profiles").select("*").eq("id", user.id).single();
+if (!user) {
+  setLoading(false);
+  return;
+}
 
-    if (profile) {
-      setUsername(profile.username || "");
-      setBio(profile.bio || "");
-      setState(profile.state || "");
-    }
-    setLoading(false);
-  }
+const { data: profile } = await supabase
+  .from("profiles")
+  .select("*")
+  .eq("id", user.id)
+  .single();
+
+if (profile) {
+  setUsername(profile.username || "");
+  setBio(profile.bio || "");
+  setState(profile.state || "");
+}
+
+setLoading(false);
 
   async function saveProfile() {
     if (!userId) return;
