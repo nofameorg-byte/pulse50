@@ -332,7 +332,7 @@ export default function RepresentativeProfile() {
               Trending
             </Link>
             <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">
-              States
+              Polls
             </Link>
           </div>
           <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ export default function RepresentativeProfile() {
           <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">← Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">States</Link>
+            <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
           </div>
         )}
       </nav>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Eye, Star, Mail, TrendingUp, Upload, Flag } from "lucide-react";
+import { Eye, Star, Mail, Upload } from "lucide-react";
 import { supabase } from "../lib/supabase";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -269,12 +269,6 @@ function TrendingStrip({ videos }: { videos: CivicVideo[] }) {
     <section className="border border-yellow-400/20 bg-yellow-400/[0.03] relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
       <div className="px-4 md:px-6 py-5">
-        <div className="flex items-center gap-2 mb-4">
-          <TrendingUp className="w-4 h-4 text-yellow-400" />
-          <h2 className="text-xs font-black uppercase tracking-widest text-yellow-400">
-            Trending National Issues
-          </h2>
-        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           {top5.map((v, i) => {
             const total = v.support_count + v.unsupport_count;
@@ -404,26 +398,12 @@ function Sidebar({ videos }: { videos: CivicVideo[] }) {
   );
 }
 
-// ── All unique states from loaded videos ──────────────────────────────────────
-function buildStateList(videos: CivicVideo[]): string[] {
-  const states = Array.from(new Set(videos.map((v) => v.state).filter(Boolean))).sort();
-  return ["All States", ...states];
-}
-
-// ── All unique label values from loaded videos ────────────────────────────────
-function buildCategoryList(videos: CivicVideo[]): string[] {
-  const cats = Array.from(
-    new Set(videos.flatMap((v) => v.labels ?? []).filter(Boolean))
-  ).sort();
-  return ["All", ...cats];
-}
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function Pulse50NowPage() {
   const [videos, setVideos] = useState<CivicVideo[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeCategory, setActiveCategory] = useState("All");
-  const [activeState, setActiveState] = useState("All States");
+
 
   useEffect(() => {
     async function load() {
@@ -438,14 +418,9 @@ export default function Pulse50NowPage() {
     load();
   }, []);
 
-  const categories = buildCategoryList(videos);
-  const allStates = buildStateList(videos);
 
-  const filtered = videos.filter((v) => {
-    const catMatch = activeCategory === "All" || (v.labels ?? []).includes(activeCategory);
-    const stateMatch = activeState === "All States" || v.state === activeState;
-    return catMatch && stateMatch;
-  });
+
+  const filtered = videos;
 
   const totalVotes = videos.reduce(
     (acc, v) => acc + v.support_count + v.unsupport_count,
@@ -558,64 +533,6 @@ export default function Pulse50NowPage() {
         </div>
       </section>
 
-      {/* ── TRENDING STRIP ── */}
-      {!loading && videos.length > 0 && (
-        <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6 pt-6">
-          <TrendingStrip videos={videos} />
-        </div>
-      )}
-
-      {/* ── FILTER BARS ── */}
-      {!loading && videos.length > 0 && (
-        <div className="sticky top-0 z-40 border-b border-white/10 bg-black/95 backdrop-blur-xl px-4 md:px-6 py-3 space-y-2">
-          <div className="mx-auto max-w-7xl space-y-2">
-            {/* Category filter — built from actual labels in DB */}
-            {categories.length > 1 && (
-              <div
-                className="flex items-center gap-2 overflow-x-auto pb-1"
-                style={{ scrollbarWidth: "none" }}
-              >
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setActiveCategory(cat)}
-                    className={`shrink-0 px-3 py-1.5 text-xs font-black uppercase tracking-wider transition ${
-                      activeCategory === cat
-                        ? "bg-yellow-400 text-black"
-                        : "border border-white/10 text-gray-400 hover:border-yellow-400/40 hover:text-yellow-400"
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                ))}
-              </div>
-            )}
-            {/* State filter — built from actual states in DB */}
-            {allStates.length > 1 && (
-              <div
-                className="flex items-center gap-2 overflow-x-auto pb-1"
-                style={{ scrollbarWidth: "none" }}
-              >
-                <Flag className="w-3.5 h-3.5 text-gray-600 shrink-0" />
-                {allStates.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setActiveState(s)}
-                    className={`shrink-0 px-3 py-1 text-xs font-bold uppercase tracking-wider transition ${
-                      activeState === s
-                        ? "bg-yellow-400/20 text-yellow-400 border border-yellow-400/40"
-                        : "border border-white/10 text-gray-500 hover:border-white/30 hover:text-gray-300"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ── MAIN CONTENT ── */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6 py-8">
         <div className="flex flex-col xl:flex-row gap-6">
@@ -625,9 +542,8 @@ export default function Pulse50NowPage() {
             <div className="flex items-center justify-between mb-5">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-0.5">
-                  {activeCategory === "All" ? "All Issues" : activeCategory}
-                  {activeState !== "All States" ? ` · ${activeState}` : ""}
-                </p>
+  All Issues
+</p>
                 <h2 className="text-2xl md:text-3xl font-black text-white">
                   {loading ? "Loading..." : `${filtered.length} Video${filtered.length !== 1 ? "s" : ""}`}
                 </h2>
@@ -657,8 +573,12 @@ export default function Pulse50NowPage() {
                   </>
                 ) : (
                   <>
-                    <p className="text-gray-600 text-lg font-bold">No videos match this filter.</p>
-                    <p className="text-gray-700 text-sm mt-2">Try a different category or state.</p>
+                    <p className="text-gray-600 text-lg font-bold">
+  No videos available.
+</p>
+                    <p className="text-gray-700 text-sm mt-2">
+  Check back soon.
+</p>
                   </>
                 )}
               </div>

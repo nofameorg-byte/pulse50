@@ -401,9 +401,8 @@ useEffect(() => {
                   Loading ORIVOO memory...
                 </div>
               ) : orderedMessages.length === 0 ? (
-                <div className="rounded-xl border border-yellow-500/20 bg-zinc-950 p-4 text-sm text-zinc-400">
-                  Ask ORIVOO about a bill, law, official, hearing, history,
-                  candidate, or civic issue.
+                <div className="rounded-xl border border-yellow-500/20 bg-zinc-950 p-3 text-sm text-zinc-400">
+                  Ask ORIVOO about bills, laws, officials, or civic issues.
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -453,16 +452,21 @@ useEffect(() => {
 
             <div className="border-t border-zinc-800 bg-black p-5 pb-10 md:pb-5">
               <textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder={
-                  loading
-                    ? "ORIVOO is thinking..."
-                    : "Ask another question..."
-                }
-                disabled={loading}
-                className="h-28 w-full rounded-xl border border-zinc-700 bg-zinc-900 p-4 text-white outline-none disabled:opacity-60"
-              />
+  value={message}
+  onChange={(e) => {
+    setMessage(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
+  }}
+  placeholder={
+    loading
+      ? "ORIVOO is thinking..."
+      : "Ask another question..."
+  }
+  disabled={loading}
+  rows={1}
+  className="min-h-[80px] max-h-[180px] w-full resize-none overflow-y-auto rounded-2xl border border-yellow-500/30 bg-zinc-900 p-4 text-white outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-60"
+/>
 
               <button
                 type="button"

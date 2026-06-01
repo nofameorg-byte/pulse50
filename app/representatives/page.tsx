@@ -241,7 +241,7 @@ const matchState =
           <div className="hidden md:flex items-center gap-6">
             <Link href="/representatives" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Directory</Link>
             <Link href="/trending" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Trending</Link>
-            <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">States</Link>
+            <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Polls</Link>
           </div>
           <div className="flex items-center gap-3">
           
@@ -259,7 +259,7 @@ const matchState =
           <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
             <Link href="/representatives" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">States</Link>
+            <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
             
           </div>
         )}
@@ -289,7 +289,7 @@ const matchState =
               value={searchQuery}
               onChange={(e) => handleSearchInput(e.target.value)}
               onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
-              placeholder="Search by name, title, city, state, or ZIP..."
+              placeholder="Search by official name..."
               className="w-full bg-transparent px-4 py-4 text-white placeholder-gray-600 outline-none text-sm"
             />
             {searchQuery && (
@@ -417,16 +417,7 @@ if (cat.id === "city_council") {
               </button>
             ))}
           </div>
-          <select
-            value={selectedState}
-            onChange={(e) => setSelectedState(e.target.value)}
-            className="bg-black border border-white/10 text-white px-4 py-2 text-sm font-bold outline-none focus:border-yellow-400 transition md:w-48 shrink-0"
-          >
-            <option value="all">All States</option>
-            {US_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          
         </div>
 
         {/* ── RESULTS COUNT ── */}
@@ -436,9 +427,7 @@ if (cat.id === "city_council") {
             {selectedCategory !== "all" && (
               <> · <span className="text-yellow-400">{CATEGORIES.find(c => c.id === selectedCategory)?.label}</span></>
             )}
-            {selectedState !== "all" && (
-              <> · <span className="text-yellow-400">{selectedState}</span></>
-            )}
+            
           </p>
           {(selectedCategory !== "all" || selectedState !== "all" || searchQuery) && (
             <button
@@ -527,7 +516,7 @@ if (cat.id === "city_council") {
           </div>
           <div className="flex gap-6 text-xs text-gray-600 font-bold uppercase tracking-wider">
             <Link href="/trending" className="hover:text-yellow-400 transition">Trending</Link>
-            <Link href="/states" className="hover:text-yellow-400 transition">States</Link>
+            <Link href="/states" className="hover:text-yellow-400 transition">Polls</Link>
             <Link href="/login" className="hover:text-yellow-400 transition">Login</Link>
           </div>
           <p className="text-center text-xs text-gray-600">

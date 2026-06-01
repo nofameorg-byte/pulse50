@@ -1,79 +1,67 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import { supabase } from "../lib/supabase";
 import MobileNav from "../components/MobileNav";
-import { US_STATES, STATE_ABBR } from "../lib/constants";
 
-interface StateStats {
-  state: string;
-  abbr: string;
-  total_reps: number;
-  total_votes: number;
-  avg_approval: number;
-}
+const POLLS = [
+  {
+    id: 1,
+    question: "Should Congress ban stock trading?",
+    standBy: 61,
+    walkAway: 39,
+    totalVotes: 24381,
+  },
+  {
+    id: 2,
+    question: "Should schools allow cell phones?",
+    standBy: 34,
+    walkAway: 66,
+    totalVotes: 18904,
+  },
+  {
+    id: 3,
+    question: "Should term limits be expanded?",
+    standBy: 78,
+    walkAway: 22,
+    totalVotes: 31207,
+  },
+  {
+    id: 4,
+    question: "Should local governments livestream meetings?",
+    standBy: 85,
+    walkAway: 15,
+    totalVotes: 14562,
+  },
+  {
+    id: 5,
+    question: "Should elected officials disclose finances yearly?",
+    standBy: 91,
+    walkAway: 9,
+    totalVotes: 22419,
+  },
+  {
+    id: 6,
+    question: "Should AI be regulated by Congress?",
+    standBy: 57,
+    walkAway: 43,
+    totalVotes: 16369,
+  },
+];
 
-export default function StatesPage() {
-  const [stats, setStats] = useState<StateStats[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"alpha" | "votes" | "approval">("votes");
+const LIFETIME_VOTES = 127842;
+
+export default function PulsePollsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Track user selections per poll: null | "standby" | "walkaway"
+  const [selections, setSelections] = useState<Record<number, "standby" | "walkaway" | null>>({});
 
-  useEffect(() => {
-    fetchStateStats();
-  }, []);
-
-  async function fetchStateStats() {
-    setLoading(true);
-    const { data: reps, error } = await supabase.from("representatives").select("id, state");
-    if (error) { console.error(error); setLoading(false); return; }
-
-    const stateMap: Record<string, { repIds: number[] }> = {};
-    (reps || []).forEach((r) => {
-      if (!stateMap[r.state]) stateMap[r.state] = { repIds: [] };
-      stateMap[r.state].repIds.push(r.id);
-    });
-
-    const stateStats: StateStats[] = await Promise.all(
-      Object.entries(stateMap).map(async ([state, { repIds }]) => {
-        let totalApprove = 0, totalDisapprove = 0;
-
-        await Promise.all(
-          repIds.map(async (id) => {
-            const { data: votes } = await supabase
-              .from("user_votes").select("vote_type").eq("representative_id", id);
-            totalApprove += (votes || []).filter((v) => v.vote_type === "approve").length;
-            totalDisapprove += (votes || []).filter((v) => v.vote_type === "disapprove").length;
-          })
-        );
-
-        const totalVotes = totalApprove + totalDisapprove;
-        const avgApproval = totalVotes > 0 ? Math.round((totalApprove / totalVotes) * 100) : 0;
-
-        return {
-          state,
-          abbr: STATE_ABBR[state] || state.slice(0, 2).toUpperCase(),
-          total_reps: repIds.length,
-          total_votes: totalVotes,
-          avg_approval: avgApproval,
-        };
-      })
-    );
-
-    setStats(stateStats);
-    setLoading(false);
+  function handleVote(pollId: number, choice: "standby" | "walkaway") {
+    setSelections((prev) => ({
+      ...prev,
+      [pollId]: prev[pollId] === choice ? null : choice,
+    }));
   }
-
-  const filtered = stats
-    .filter((s) => s.state.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => {
-      if (sortBy === "alpha") return a.state.localeCompare(b.state);
-      if (sortBy === "votes") return b.total_votes - a.total_votes;
-      if (sortBy === "approval") return b.avg_approval - a.avg_approval;
-      return 0;
-    });
 
   return (
     <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
@@ -88,133 +76,185 @@ export default function StatesPage() {
           <div className="hidden md:flex items-center gap-6">
             <Link href="/representatives" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Directory</Link>
             <Link href="/trending" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Trending</Link>
-            <Link href="/states" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">States</Link>
+            <Link href="/now" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Now</Link>
+            <Link href="/states" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Polls</Link>
           </div>
-          <div className="flex items-center gap-3">
-            
-            <button className="md:hidden p-2 text-gray-400" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                {mobileMenuOpen
-                  ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                }
-              </svg>
-            </button>
-          </div>
+          <button
+            className="md:hidden p-2 text-gray-400"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              }
+            </svg>
+          </button>
         </div>
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/states" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">States</Link>
-            
+            <Link href="/now" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Now</Link>
+            <Link href="/states" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Polls</Link>
           </div>
         )}
       </nav>
 
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-12">
 
-        <div className="mb-8">
-          <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-2">Browse by Location</p>
-          <h1 className="text-4xl md:text-6xl font-black text-white leading-none">
-            STATE<br />
-            <span className="text-yellow-400">OVERVIEW</span>
+        {/* Hero */}
+        <div className="mb-10">
+          <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-2">
+            The People Decide
+          </p>
+          <h1 className="text-5xl md:text-7xl font-black text-white leading-none mb-6">
+            PULSE<br />
+            <span className="text-yellow-400">POLLS</span>
           </h1>
-        </div>
 
-        {/* Controls */}
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search states..."
-            className="flex-1 bg-black border border-white/10 px-4 py-3 text-white placeholder-gray-600 outline-none focus:border-yellow-400 transition text-sm"
-          />
-          <div className="flex gap-2">
-            {[
-              { id: "votes", label: "Most Active" },
-              { id: "approval", label: "Highest Approval" },
-              { id: "alpha", label: "A–Z" },
-            ].map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => setSortBy(opt.id as typeof sortBy)}
-                className={`px-4 py-3 text-xs font-black uppercase tracking-wider border transition ${
-                  sortBy === opt.id
-                    ? "bg-yellow-400 text-black border-yellow-400"
-                    : "border-white/10 text-gray-400 hover:border-yellow-400 hover:text-yellow-400"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {loading ? (
-          <div className="flex gap-4 overflow-x-auto pb-4" style={{ scrollbarWidth: "none" }}>
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="shrink-0 w-[160px] sm:w-[200px] border border-white/10 bg-white/[0.02] p-6 animate-pulse space-y-3">
-                <div className="h-10 w-16 bg-white/5" />
-                <div className="h-5 bg-white/5 w-3/4" />
-                <div className="h-3 bg-white/5 w-full" />
+          {/* Stats row */}
+          <div className="flex flex-col sm:flex-row items-stretch border border-yellow-400/20 bg-yellow-400/[0.03] relative">
+            <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
+            <div className="px-6 py-4">
+              <div className="text-3xl md:text-4xl font-black text-yellow-400">
+                {LIFETIME_VOTES.toLocaleString()}
               </div>
-            ))}
-          </div>
-        ) : (
-          <div className="relative">
-            <div
-              className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-            >
-              {filtered.map((s) => (
-                <Link
-                  key={s.state}
-                  href={`/states/${encodeURIComponent(s.state.toLowerCase().replace(/ /g, "-"))}`}
-                  className="snap-start shrink-0 w-[160px] sm:w-[200px] border border-white/10 bg-white/[0.02] p-5 hover:border-yellow-400 transition group relative"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-
-                  {/* Abbr */}
-                  <div className="text-4xl font-black text-white/10 group-hover:text-yellow-400/20 transition mb-3 leading-none">
-                    {s.abbr}
-                  </div>
-
-                  <h2 className="text-sm font-black text-white leading-tight mb-3">{s.state}</h2>
-
-                  {/* Approval bar */}
-                  <div className="h-1 bg-white/10 mb-3">
-                    <div
-                      className="h-full bg-yellow-400 transition-all duration-700"
-                      style={{ width: `${s.avg_approval}%` }}
-                    />
-                  </div>
-
-                  <div className="flex justify-between text-xs">
-                    <span className="text-yellow-400 font-bold">{s.avg_approval}%</span>
-                  </div>
-
-                  <div className="flex justify-between mt-2 text-xs text-gray-600">
-                    <span>{s.total_reps} reps</span>
-                    <span>{s.total_votes.toLocaleString()}v</span>
-                  </div>
-                </Link>
-              ))}
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-0.5">
+                Lifetime Votes Cast
+              </p>
             </div>
-            {/* Scroll hint fade */}
-            <div className="absolute right-0 top-0 bottom-4 w-16 bg-gradient-to-l from-black to-transparent pointer-events-none" />
+            <div className="h-px sm:h-auto sm:w-px bg-yellow-400/20" />
+            <div className="px-6 py-4">
+              <div className="text-3xl md:text-4xl font-black text-yellow-400">
+                {POLLS.length}
+              </div>
+              <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-0.5">
+                Active Polls
+              </p>
+            </div>
           </div>
-        )}
+        </div>
+
+        {/* Poll grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {POLLS.map((poll) => {
+            const selected = selections[poll.id] ?? null;
+            return (
+              <PollCard
+                key={poll.id}
+                poll={poll}
+                selected={selected}
+                onVote={(choice) => handleVote(poll.id, choice)}
+              />
+            );
+          })}
+        </div>
       </div>
 
+      {/* Footer */}
       <footer className="border-t border-white/10 bg-black px-6 py-10 mt-16">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 md:flex-row">
-          <div className="text-2xl font-black"><span className="text-white">Pulse</span><span className="text-yellow-400">50</span></div>
-          <p className="text-center text-xs text-gray-600">Public opinion platform. Not affiliated with any government entity.</p>
+          <div className="text-2xl font-black">
+            <span className="text-white">Pulse</span>
+            <span className="text-yellow-400">50</span>
+          </div>
+          <p className="text-center text-xs text-gray-600">
+            Public opinion platform. Not affiliated with any government entity.
+          </p>
         </div>
       </footer>
+
       <MobileNav />
     </main>
+  );
+}
+
+// ── Poll Card ─────────────────────────────────────────────────────────────────
+interface PollCardProps {
+  poll: typeof POLLS[number];
+  selected: "standby" | "walkaway" | null;
+  onVote: (choice: "standby" | "walkaway") => void;
+}
+
+function PollCard({ poll, selected, onVote }: PollCardProps) {
+  const standByPct = poll.standBy;
+  const walkAwayPct = poll.walkAway;
+
+  return (
+    <div className="border border-white/10 bg-white/[0.02] flex flex-col relative overflow-hidden group hover:border-yellow-400/30 transition">
+      {/* Top accent line */}
+      <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+
+      {/* Placeholder image */}
+      <div className="w-full aspect-video bg-white/[0.03] border-b border-white/10 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent" />
+        <div className="text-center px-4">
+          <div className="text-4xl font-black text-white/5 leading-none select-none">
+            POLL
+          </div>
+        </div>
+        {/* Poll number badge */}
+        <div className="absolute top-3 left-3 bg-yellow-400 text-black text-xs font-black px-2 py-0.5 uppercase tracking-wider">
+          #{poll.id}
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="p-5 flex flex-col gap-4 flex-1">
+
+        {/* Question */}
+        <h3 className="text-white font-black text-base leading-snug flex-1">
+          {poll.question}
+        </h3>
+
+        {/* Vote bar */}
+        <div className="h-1.5 bg-white/10 flex overflow-hidden">
+          <div
+            className="h-full bg-yellow-400 transition-all duration-700"
+            style={{ width: `${standByPct}%` }}
+          />
+          <div
+            className="h-full bg-red-500 transition-all duration-700"
+            style={{ width: `${walkAwayPct}%` }}
+          />
+        </div>
+
+        {/* Percentages */}
+        <div className="flex justify-between text-xs font-black uppercase tracking-wider">
+          <span className="text-yellow-400">{standByPct}% Stand By</span>
+          <span className="text-red-400">{walkAwayPct}% Walk Away</span>
+        </div>
+
+        {/* Total votes */}
+        <p className="text-gray-600 text-xs font-bold uppercase tracking-wider">
+          {poll.totalVotes.toLocaleString()} votes
+        </p>
+
+        {/* Vote buttons */}
+        <div className="flex gap-3 pt-1">
+          <button
+            onClick={() => onVote("standby")}
+            className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
+              selected === "standby"
+                ? "bg-yellow-400 text-black border-yellow-400"
+                : "border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10"
+            }`}
+          >
+            Stand By
+          </button>
+          <button
+            onClick={() => onVote("walkaway")}
+            className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
+              selected === "walkaway"
+                ? "bg-red-500 text-white border-red-500"
+                : "border-red-500/30 text-red-400 hover:bg-red-500/10"
+            }`}
+          >
+            Walk Away
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

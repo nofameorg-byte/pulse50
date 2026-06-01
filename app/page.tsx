@@ -169,7 +169,7 @@ export default function Home() {
               { label: "Home", href: "/" },
               { label: "Representatives", href: "/representatives" },
               { label: "Discussions", href: "/representatives" },
-              { label: "States", href: "/representatives" },
+              { label: "Polls", href: "/states" },
               { label: "Now", href: "/now" },
             ].map((item) => (
               <Link
@@ -261,7 +261,7 @@ export default function Home() {
          {/* Buttons */}
 <div className="flex justify-center mb-14">
   <button
-    onClick={() => router.push("/login")}
+    onClick={() => router.push("/representatives")}
     className="px-10 py-4 bg-yellow-400 text-black font-black text-sm uppercase tracking-wider hover:bg-yellow-300 transition"
   >
     Vote & Join the Discussion
@@ -575,7 +575,7 @@ export default function Home() {
                 Platform
               </h4>
               <nav className="flex flex-col gap-3">
-                {["Representatives", "Discussions", "States", "Leaderboard"].map((l) => (
+                {["Representatives", "Discussions", "Polls", "Leaderboard"].map((l) => (
                   <Link
                     key={l}
                     href="/representatives"
