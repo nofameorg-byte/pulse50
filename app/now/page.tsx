@@ -618,7 +618,7 @@ export default function Pulse50NowPage() {
 
       {/* ── MAIN CONTENT ── */}
       <div className="relative z-10 mx-auto max-w-7xl px-4 md:px-6 py-8">
-        <div className="flex gap-6">
+        <div className="flex flex-col xl:flex-row gap-6">
 
           {/* Video grid */}
           <div className="flex-1 min-w-0">
@@ -671,12 +671,12 @@ export default function Pulse50NowPage() {
             )}
           </div>
 
-          {/* Sidebar — desktop only */}
-          {!loading && videos.length > 0 && (
-            <div className="hidden 2xl:block w-64 shrink-0">
-              <Sidebar videos={videos} />
-            </div>
-          )}
+          {/* Sidebar — below feed on mobile, right column on desktop */}
+{!loading && videos.length > 0 && (
+  <div className="w-full xl:w-64 xl:shrink-0">
+  <Sidebar videos={videos} />
+</div>
+)}
 
         </div>
       </div>
