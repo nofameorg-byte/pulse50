@@ -380,7 +380,7 @@ useEffect(() => {
                 <button
                   type="button"
                   onClick={() => setOpen(false)}
-                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 relative -top-2 md:top-0"
+                  className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 relative -top-4 md:top-0"
                 >
                   Close
                 </button>
