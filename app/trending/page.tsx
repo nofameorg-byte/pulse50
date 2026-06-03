@@ -49,41 +49,23 @@ export default function TrendingPage() {
   }, []);
 
   async function fetchTrending() {
-    setLoading(true);
-    const { data, error } = await supabase.from("representatives").select("*");
-    if (error) { console.error(error); setLoading(false); return; }
+  setLoading(true);
 
-    const enriched = await Promise.all(
-      (data || []).map(async (rep) => {
-        const { data: approvals } = await supabase
-          .from("user_votes").select("id, created_at")
-          .eq("representative_id", rep.id).eq("vote_type", "approve");
-        const { data: disapprovals } = await supabase
-          .from("user_votes").select("id, created_at")
-          .eq("representative_id", rep.id).eq("vote_type", "disapprove");
-        const { count: discussions } = await supabase
-          .from("comments").select("*", { count: "exact", head: true })
-          .eq("representative_id", rep.id);
+  const { data, error } = await supabase
+    .from("trending_view")
+    .select("*")
+    .order("trending_score", { ascending: false })
+    .limit(100);
 
-        const allVotes = [...(approvals || []), ...(disapprovals || [])];
-        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
-        const recentVotes = allVotes.filter(
-          (v) => new Date(v.created_at).getTime() > cutoff
-        ).length;
-
-        return {
-          ...rep,
-          approve_count: approvals?.length || 0,
-          disapprove_count: disapprovals?.length || 0,
-          discussion_count: discussions || 0,
-          recent_votes: recentVotes,
-        };
-      })
-    );
-
-    setItems(enriched);
+  if (error) {
+    console.error(error);
     setLoading(false);
+    return;
   }
+
+  setItems(data || []);
+  setLoading(false);
+}
 
   async function fetchUserVotes() {
     const { data: { user } } = await supabase.auth.getUser();
