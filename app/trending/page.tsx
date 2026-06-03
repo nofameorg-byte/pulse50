@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import VoteCard from "../components/VoteCard";
-import { CATEGORIES } from "../lib/constants";
 import { sortByMode } from "../lib/trending";
 import type { SortMode as TrendingSortMode } from "../lib/trending";
 import MobileNav from "../components/MobileNav";
@@ -31,7 +30,6 @@ export default function TrendingPage() {
   const [userVotes, setUserVotes] = useState<Record<number, string>>({});
   const [votingId, setVotingId] = useState<number | null>(null);
   const [sortMode, setSortMode] = useState<SortMode>("trending");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -105,11 +103,7 @@ export default function TrendingPage() {
     { id: "most_disapproved", label: "Most Disapproved" },
   ];
 
-  const filtered = items.filter(
-    (i) => selectedCategory === "all" || i.category.toLowerCase() === selectedCategory.toLowerCase()
-  );
-
-  const sorted = sortByMode(filtered, sortMode);
+  const sorted = sortByMode(items, sortMode);
 
   return (
     <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
@@ -176,22 +170,7 @@ export default function TrendingPage() {
           ))}
         </div>
 
-        {/* Category filter */}
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-8">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`shrink-0 px-3 py-1.5 text-xs font-bold uppercase tracking-wider border transition ${
-                selectedCategory === cat.id
-                  ? "border-yellow-400/50 text-yellow-400"
-                  : "border-white/10 text-gray-600 hover:text-gray-400"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
+        {/* Category filters removed for now */}
 
         {/* Hot right now banner */}
         {sortMode === "recent" && (
