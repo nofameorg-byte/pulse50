@@ -85,36 +85,30 @@ function RepresentativesContent() {
 
  
 
-  async function fetchRepresentatives() {
-    setLoading(true);
-    const { data, error } = await supabase
-  .from("representatives")
-  .select("*")
-  .range(0, 99);
-    if (error) { console.error(error); setLoading(false); return; }
+    async function fetchRepresentatives() {
+  setLoading(true);
 
-    const updatedReps = await Promise.all(
-      (data || []).map(async (rep) => {
-        const { data: approvals } = await supabase
-          .from("user_votes").select("id")
-          .eq("representative_id", rep.id).eq("vote_type", "approve");
-        const { data: disapprovals } = await supabase
-          .from("user_votes").select("id")
-          .eq("representative_id", rep.id).eq("vote_type", "disapprove");
-        const { count: discussions } = await supabase
-          .from("comments").select("*", { count: "exact", head: true })
-          .eq("representative_id", rep.id);
-        return {
-          ...rep,
-          approve_count: approvals?.length || 0,
-          disapprove_count: disapprovals?.length || 0,
-          discussion_count: discussions || 0,
-        };
-      })
-    );
-    setRepresentatives(updatedReps);
+  const { data, error } = await supabase
+    .from("representatives_view")
+    .select("*")
+    .range(0, 99);
+
+  if (error) {
+    console.error(error);
     setLoading(false);
+    return;
   }
+
+  const reps = (data || []).map((rep) => ({
+    ...rep,
+    approve_count: rep.stat_approve_count || 0,
+    disapprove_count: rep.stat_disapprove_count || 0,
+    discussion_count: rep.stat_discussion_count || 0,
+  }));
+
+  setRepresentatives(reps);
+  setLoading(false);
+}
 
   async function fetchUserVotes() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -132,14 +126,23 @@ function RepresentativesContent() {
     if (userVotes[repId] === voteType) return;
 
     setVotingId(repId);
-    if (userVotes[repId]) {
-      await supabase.from("user_votes")
-        .update({ vote_type: voteType })
-        .eq("representative_id", repId).eq("user_id", user.id);
-    } else {
-      await supabase.from("user_votes")
-        .insert({ representative_id: repId, user_id: user.id, vote_type: voteType });
-    }
+    const result = userVotes[repId]
+  ? await supabase
+      .from("user_votes")
+      .update({ vote_type: voteType })
+      .eq("representative_id", repId)
+      .eq("user_id", user.id)
+      .select()
+  : await supabase
+      .from("user_votes")
+      .insert({
+        representative_id: repId,
+        user_id: user.id,
+        vote_type: voteType,
+      })
+      .select();
+
+console.log("VOTE RESULT:", JSON.stringify(result, null, 2));
     setUserVotes((prev) => ({ ...prev, [repId]: voteType }));
     setVotingId(null);
     fetchRepresentatives();
@@ -160,8 +163,8 @@ function RepresentativesContent() {
   }
 
   const { data, error } = await supabase
-    .from("representatives")
-    .select("*")
+  .from("representatives_view")
+  .select("*")
     .or(`name.ilike.%${val}%,title.ilike.%${val}%,state.ilike.%${val}%,city.ilike.%${val}%`)
     .limit(20);
 
@@ -179,7 +182,6 @@ function RepresentativesContent() {
 
 
   const filtered = representatives.filter((r) => {
-    console.log("SELECTED CATEGORY:", selectedCategory);
     const q = searchQuery.toLowerCase();
     const matchSearch =
       !q ||
@@ -388,7 +390,9 @@ if (cat.id === "city_council") {
   return;
 }
 
-  let query = supabase.from("representatives").select("*");
+  let query = supabase
+  .from("representatives_view")
+  .select("*");
 
   if (cat.id === "governor") {
     query = query.in("category", ["Governor", "Governors"]);
