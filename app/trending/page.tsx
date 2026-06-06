@@ -118,7 +118,7 @@ export default function TrendingPage() {
           <div className="hidden md:flex items-center gap-6">
             <Link href="/representatives" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Directory</Link>
             <Link href="/trending" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Trending</Link>
-            <Link href="/states" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Polls</Link>
+            <Link href="/polls" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Polls</Link>
           </div>
           <div className="flex items-center gap-3">
             
@@ -136,7 +136,7 @@ export default function TrendingPage() {
           <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/states" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
+            <Link href="/polls" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
             
           </div>
         )}

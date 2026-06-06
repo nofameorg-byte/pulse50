@@ -172,7 +172,7 @@ export async function triggerStateActivityNotification(
 
     if (!stateUsers) return;
 
-    const link = `/states/${encodeURIComponent(state.toLowerCase().replace(/ /g, "-"))}`;
+    const link = `/Polls/${encodeURIComponent(state.toLowerCase().replace(/ /g, "-"))}`;
     const message = `${state} is surging — ${spike}+ votes in the last hour`;
 
     await Promise.all(

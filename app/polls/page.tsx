@@ -8,48 +8,48 @@ const POLLS = [
   {
     id: 1,
     question: "Should Congress ban stock trading?",
-    standBy: 61,
-    walkAway: 39,
-    totalVotes: 24381,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
   {
     id: 2,
     question: "Should schools allow cell phones?",
-    standBy: 34,
-    walkAway: 66,
-    totalVotes: 18904,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
   {
     id: 3,
     question: "Should term limits be expanded?",
-    standBy: 78,
-    walkAway: 22,
-    totalVotes: 31207,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
   {
     id: 4,
     question: "Should local governments livestream meetings?",
-    standBy: 85,
-    walkAway: 15,
-    totalVotes: 14562,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
   {
     id: 5,
     question: "Should elected officials disclose finances yearly?",
-    standBy: 91,
-    walkAway: 9,
-    totalVotes: 22419,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
   {
     id: 6,
     question: "Should AI be regulated by Congress?",
-    standBy: 57,
-    walkAway: 43,
-    totalVotes: 16369,
+    standBy: 0,
+    walkAway: 0,
+    totalVotes: 0,
   },
 ];
 
-const LIFETIME_VOTES = 127842;
+const LIFETIME_VOTES = 0;
 
 export default function PulsePollsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -77,7 +77,7 @@ export default function PulsePollsPage() {
             <Link href="/representatives" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Directory</Link>
             <Link href="/trending" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Trending</Link>
             <Link href="/now" className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider">Now</Link>
-            <Link href="/states" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Polls</Link>
+            <Link href="/polls" className="text-sm font-bold text-yellow-400 uppercase tracking-wider">Polls</Link>
           </div>
           <button
             className="md:hidden p-2 text-gray-400"
@@ -96,7 +96,7 @@ export default function PulsePollsPage() {
             <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
             <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
             <Link href="/now" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Now</Link>
-            <Link href="/states" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Polls</Link>
+            <Link href="/polls" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Polls</Link>
           </div>
         )}
       </nav>

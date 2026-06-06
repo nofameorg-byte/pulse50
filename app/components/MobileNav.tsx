@@ -62,7 +62,7 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/states",
+    href: "/Polls",
     label: "States",
     icon: (active: boolean) => (
       <svg

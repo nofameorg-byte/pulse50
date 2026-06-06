@@ -169,7 +169,7 @@ export default function Home() {
               { label: "Home", href: "/" },
               { label: "Representatives", href: "/representatives" },
               { label: "Discussions", href: "/representatives" },
-              { label: "Polls", href: "/states" },
+              { label: "Polls", href: "/Polls" },
               { label: "Now", href: "/now" },
             ].map((item) => (
               <Link
