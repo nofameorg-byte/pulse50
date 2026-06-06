@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Pulse50",
   description: "Pulse50 powered by ORIVOO AI",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
