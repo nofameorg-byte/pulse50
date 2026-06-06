@@ -60,7 +60,7 @@ const BLANK_VIDEO: Omit<CivicVideo, "id" | "created_at" | "support_count" | "uns
   enabled: true,
 };
 
-type AdminTab = "reports" | "comments" | "users" | "banned" | "pulsenow";
+type AdminTab = "reports" | "comments" | "users" | "banned" | "pulsenow" | "polls";
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminPage() {
@@ -73,7 +73,11 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
-
+  const [polls, setPolls] = useState<any[]>([]);
+  const [pollQuestion, setPollQuestion] = useState("");
+  const [pollImageUrl, setPollImageUrl] = useState("");
+  const [editingPoll, setEditingPoll] = useState<any | null>(null);
+  
   // PulseNow state
   const [videos, setVideos] = useState<CivicVideo[]>([]);
   const [videoLoading, setVideoLoading] = useState(false);
@@ -91,6 +95,7 @@ export default function AdminPage() {
     if (tab === "banned")    fetchBanned();
     if (tab === "users")     fetchUsers();
     if (tab === "pulsenow")  fetchVideos();
+    if (tab === "polls")     fetchPolls();
   }, [tab, isAdmin]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -147,6 +152,80 @@ export default function AdminPage() {
     setAllUsers(data || []);
     setLoading(false);
   }
+
+async function fetchPolls() {
+  const { data, error } = await supabase
+    .from("pulse_polls")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (!error) {
+    setPolls(data || []);
+  }
+}
+
+async function createPoll() {
+  if (!pollQuestion.trim()) return;
+
+  const { error } = await supabase
+    .from("pulse_polls")
+    .insert({
+      question: pollQuestion.trim(),
+      image_url: pollImageUrl.trim() || null,
+      active: true,
+    });
+
+  if (!error) {
+    setPollQuestion("");
+    setPollImageUrl("");
+    fetchPolls();
+  }
+}
+
+function editPoll(poll: any) {
+  setEditingPoll(poll);
+  setPollQuestion(poll.question || "");
+  setPollImageUrl(poll.image_url || "");
+}
+
+async function savePoll() {
+  if (!editingPoll) return;
+
+  const { error } = await supabase
+    .from("pulse_polls")
+    .update({
+      question: pollQuestion.trim(),
+      image_url: pollImageUrl.trim() || null,
+    })
+    .eq("id", editingPoll.id);
+
+  if (!error) {
+    setEditingPoll(null);
+    setPollQuestion("");
+    setPollImageUrl("");
+    fetchPolls();
+  }
+}
+
+async function deletePoll(id: number) {
+  if (!confirm("Delete this poll?")) return;
+
+  await supabase
+    .from("pulse_polls")
+    .delete()
+    .eq("id", id);
+
+  fetchPolls();
+}
+
+async function togglePoll(id: number, active: boolean) {
+  await supabase
+    .from("pulse_polls")
+    .update({ active: !active })
+    .eq("id", id);
+
+  fetchPolls();
+}
 
   async function hideComment(id: number) {
     await supabase.from("comments").update({ hidden: true }).eq("id", id);
@@ -344,7 +423,9 @@ function flash(msg: string) {
     { id: "users",    label: "Users" },
     { id: "banned",   label: "Banned" },
     { id: "pulsenow", label: "PulseNow" },
+    { id: "polls", label: "Polls" }
   ];
+
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -561,6 +642,7 @@ function flash(msg: string) {
                 </button>
               )}
             </div>
+            
 
             {/* ── Add / Edit form ── */}
             {showVideoForm && (
@@ -663,6 +745,7 @@ function flash(msg: string) {
                     />
                   </div>
                 </div>
+
 
                 {/* Labels */}
                 <div className="mb-4">
@@ -821,6 +904,107 @@ function flash(msg: string) {
           </div>
         )}
 
+{/* ── POLLS ── */}
+{tab === "polls" && (
+  <div>
+    <div className="border border-white/10 bg-white/[0.02] p-5 mb-6">
+      <h3 className="text-lg font-black text-yellow-400 mb-4">
+        {editingPoll ? "Edit Poll" : "Create Poll"}
+      </h3>
+
+      <input
+        type="text"
+        value={pollQuestion}
+        onChange={(e) => setPollQuestion(e.target.value)}
+        placeholder="Poll Question"
+        className="w-full mb-3 bg-black border border-white/10 p-3 text-white"
+      />
+
+      <input
+        type="text"
+        value={pollImageUrl}
+        onChange={(e) => setPollImageUrl(e.target.value)}
+        placeholder="Image URL (optional)"
+        className="w-full mb-4 bg-black border border-white/10 p-3 text-white"
+      />
+
+      <div className="flex gap-2">
+        {editingPoll ? (
+          <>
+            <button
+              onClick={savePoll}
+              className="bg-yellow-400 text-black px-5 py-2 font-black uppercase"
+            >
+              Save Changes
+            </button>
+
+            <button
+              onClick={() => {
+                setEditingPoll(null);
+                setPollQuestion("");
+                setPollImageUrl("");
+              }}
+              className="border border-white/10 px-5 py-2"
+            >
+              Cancel
+            </button>
+          </>
+        ) : (
+          <button
+            onClick={createPoll}
+            className="bg-yellow-400 text-black px-5 py-2 font-black uppercase"
+          >
+            Create Poll
+          </button>
+        )}
+      </div>
+    </div>
+
+    <div className="space-y-3">
+      {polls.map((poll) => (
+        <div
+          key={poll.id}
+          className="border border-white/10 bg-white/[0.02] p-5"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="font-bold text-white">
+                {poll.question}
+              </p>
+
+              <p className="text-xs text-gray-500 mt-1">
+                Poll #{poll.id}
+              </p>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => editPoll(poll)}
+                className="px-3 py-1 border border-yellow-400 text-yellow-400 text-xs font-black uppercase"
+              >
+                Edit
+              </button>
+
+              <button
+                onClick={() => togglePoll(poll.id, poll.active)}
+                className="px-3 py-1 border border-white/10 text-white text-xs font-black uppercase"
+              >
+                {poll.active ? "Disable" : "Enable"}
+              </button>
+
+              <button
+                onClick={() => deletePoll(poll.id)}
+                className="px-3 py-1 border border-red-500 text-red-400 text-xs font-black uppercase"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
       </div>
 
       {/* Footer */}
