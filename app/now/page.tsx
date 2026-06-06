@@ -433,28 +433,6 @@ export default function Pulse50NowPage() {
   return (
     <main className="min-h-screen bg-black text-white relative overflow-x-hidden pb-16 md:pb-0">
 
-      {/* USA flag background */}
-      <div
-        className="fixed inset-0 pointer-events-none z-0"
-        style={{ opacity: 0.04 }}
-        aria-hidden="true"
-      >
-        <div
-          className="absolute top-0 left-0 w-2/5 h-2/5"
-          style={{
-            background:
-              "repeating-radial-gradient(circle at 8px 8px, rgba(255,255,255,0.9) 1px, transparent 2px)",
-            backgroundSize: "20px 20px",
-          }}
-        />
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(180deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 24px, transparent 24px, transparent 48px)",
-          }}
-        />
-      </div>
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
@@ -583,14 +561,21 @@ export default function Pulse50NowPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {filtered.map((video) => (
-                  <VideoCard key={video.id} video={video} />
-                ))}
-              </div>
-            )}
-          </div>
+  <div className="md:max-h-[900px] md:overflow-y-auto md:pr-2">
+  <div className="flex gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
+    {filtered.map((video) => (
+      <div
+        key={video.id}
+        className="min-w-[85%] flex-shrink-0 md:min-w-0 md:flex-shrink"
+      >
+        <VideoCard video={video} />
+      </div>
+    ))}
+  </div>
+</div>
+)}
 
+</div>
           {/* Sidebar — below feed on mobile, right column on desktop */}
 {!loading && videos.length > 0 && (
   <div className="w-full xl:w-64 xl:shrink-0">

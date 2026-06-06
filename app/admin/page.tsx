@@ -219,6 +219,26 @@ async function deletePoll(id: number) {
   fetchPolls();
 }
 
+async function restoreVotes(pollId: number) {
+  if (!confirm("Restore votes for this poll? This will reset the poll to 0 votes.")) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("pulse_poll_votes")
+    .delete()
+    .eq("poll_id", pollId);
+
+  if (error) {
+    console.error(error);
+    alert("Failed to restore votes.");
+    return;
+  }
+
+  flash("Poll votes restored.");
+}
+
+
 async function togglePoll(id: number, active: boolean) {
   const { error } = await supabase
     .from("pulse_polls")
@@ -1019,6 +1039,14 @@ function flash(msg: string) {
               >
                 {poll.active ? "Disable" : "Enable"}
               </button>
+
+<button
+  onClick={() => restoreVotes(poll.id)}
+  className="px-3 py-1 border border-orange-500 text-orange-400 text-xs font-black uppercase"
+>
+  Restore Votes
+</button>
+
 
               <button
                 onClick={() => deletePoll(poll.id)}

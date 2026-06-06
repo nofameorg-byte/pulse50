@@ -214,21 +214,29 @@ async function loadPolls() {
           </div>
         </div>
 
-        {/* Poll grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {polls.map((poll) => {
-            const selected = selections[poll.id] ?? null;
-            return (
-              <PollCard
-                key={poll.id}
-                poll={poll}
-                selected={selected}
-                onVote={(choice) => handleVote(poll.id, choice)}
-              />
-            );
-          })}
+        {/* Poll slider */}
+<div className="overflow-x-auto pb-4">
+  <div className="flex gap-5">
+    {polls.map((poll) => {
+      const selected = selections[poll.id] ?? null;
+
+      return (
+        <div
+          key={poll.id}
+          className="w-[420px] flex-shrink-0"
+        >
+          <PollCard
+            poll={poll}
+            selected={selected}
+            onVote={(choice) => handleVote(poll.id, choice)}
+          />
         </div>
-      </div>
+      );
+    })}
+  </div>
+</div>
+  </div>
+
 
       {/* Footer */}
       <footer className="border-t border-white/10 bg-black px-6 py-10 mt-16">
