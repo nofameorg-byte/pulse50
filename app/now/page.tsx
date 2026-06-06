@@ -566,7 +566,7 @@ export default function Pulse50NowPage() {
     {filtered.map((video) => (
       <div
         key={video.id}
-        className="min-w-[85%] flex-shrink-0 md:min-w-0 md:flex-shrink"
+        className="min-w-[75%] flex-shrink-0 md:min-w-0 md:flex-shrink"
       >
         <VideoCard video={video} />
       </div>

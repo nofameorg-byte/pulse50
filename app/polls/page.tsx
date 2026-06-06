@@ -223,7 +223,7 @@ async function loadPolls() {
       return (
         <div
           key={poll.id}
-          className="w-[420px] flex-shrink-0"
+          className="w-[320px] flex-shrink-0"
         >
           <PollCard
             poll={poll}
