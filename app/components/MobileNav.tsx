@@ -62,8 +62,8 @@ const NAV_ITEMS = [
     ),
   },
   {
-    href: "/Polls",
-    label: "States",
+    href: "/polls",
+    label: "Polls",
     icon: (active: boolean) => (
       <svg
         className={`w-5 h-5 transition-colors ${active ? "text-yellow-400" : "text-gray-500"}`}
