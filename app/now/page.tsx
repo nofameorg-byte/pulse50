@@ -561,12 +561,12 @@ export default function Pulse50NowPage() {
                 )}
               </div>
             ) : (
-  <div className="md:max-h-[900px] md:overflow-y-auto md:pr-2">
-  <div className="flex gap-5 overflow-x-auto pb-4 md:grid md:grid-cols-2 md:overflow-visible md:pb-0">
+  <div className="overflow-x-auto pb-4">
+  <div className="flex gap-5">
     {filtered.map((video) => (
       <div
         key={video.id}
-        className="min-w-[75%] flex-shrink-0 md:min-w-0 md:flex-shrink"
+        className="w-[320px] sm:w-[360px] md:w-[420px] flex-shrink-0"
       >
         <VideoCard video={video} />
       </div>
