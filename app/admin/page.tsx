@@ -160,8 +160,9 @@ async function fetchPolls() {
     .order("created_at", { ascending: false });
 
   if (!error) {
-    setPolls(data || []);
-  }
+  console.log("POLL DATA:", data);
+  setPolls([...data]);
+}
 }
 
 async function createPoll() {
@@ -219,13 +220,41 @@ async function deletePoll(id: number) {
 }
 
 async function togglePoll(id: number, active: boolean) {
-  await supabase
+  const { error } = await supabase
     .from("pulse_polls")
     .update({ active: !active })
     .eq("id", id);
 
-  fetchPolls();
+  console.log("TOGGLE ERROR:", error);
+
+  await fetchPolls();
 }
+
+async function handlePollImageUpload(
+  e: React.ChangeEvent<HTMLInputElement>
+) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  const fileName = `${Date.now()}-${file.name}`;
+
+  const { error } = await supabase.storage
+    .from("poll-images")
+    .upload(fileName, file);
+
+    if (error) {
+  console.error("UPLOAD ERROR:", error);
+  alert(error.message);
+  return;
+}
+
+  const { data } = supabase.storage
+    .from("poll-images")
+    .getPublicUrl(fileName);
+
+  setPollImageUrl(data.publicUrl);
+}
+
 
   async function hideComment(id: number) {
     await supabase.from("comments").update({ hidden: true }).eq("id", id);
@@ -921,12 +950,11 @@ function flash(msg: string) {
       />
 
       <input
-        type="text"
-        value={pollImageUrl}
-        onChange={(e) => setPollImageUrl(e.target.value)}
-        placeholder="Image URL (optional)"
-        className="w-full mb-4 bg-black border border-white/10 p-3 text-white"
-      />
+  type="file"
+  accept="image/*"
+  onChange={handlePollImageUpload}
+  className="w-full mb-4 bg-black border border-white/10 p-3 text-white"
+/>
 
       <div className="flex gap-2">
         {editingPoll ? (

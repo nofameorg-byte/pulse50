@@ -1,67 +1,145 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 import Link from "next/link";
 import MobileNav from "../components/MobileNav";
 
-const POLLS = [
-  {
-    id: 1,
-    question: "Should Congress ban stock trading?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-  {
-    id: 2,
-    question: "Should schools allow cell phones?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-  {
-    id: 3,
-    question: "Should term limits be expanded?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-  {
-    id: 4,
-    question: "Should local governments livestream meetings?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-  {
-    id: 5,
-    question: "Should elected officials disclose finances yearly?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-  {
-    id: 6,
-    question: "Should AI be regulated by Congress?",
-    standBy: 0,
-    walkAway: 0,
-    totalVotes: 0,
-  },
-];
+
+type Poll = {
+  id: number;
+  question: string;
+  image_url: string | null;
+  active: boolean;
+  description?: string | null;
+
+  standBy: number;
+  walkAway: number;
+  totalVotes: number;
+};
 
 const LIFETIME_VOTES = 0;
 
 export default function PulsePollsPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  // Track user selections per poll: null | "standby" | "walkaway"
-  const [selections, setSelections] = useState<Record<number, "standby" | "walkaway" | null>>({});
+const [polls, setPolls] = useState<Poll[]>([]);
+const [selections, setSelections] = useState<
+  Record<number, "standby" | "walkaway" | null>
+>({});
 
-  function handleVote(pollId: number, choice: "standby" | "walkaway") {
-    setSelections((prev) => ({
-      ...prev,
-      [pollId]: prev[pollId] === choice ? null : choice,
-    }));
+const [lifetimeVotes, setLifetimeVotes] = useState(0);
+
+
+  // Track user selections per poll: null | "standby" | "walkaway"
+  
+useEffect(() => {
+  loadPolls();
+}, []);
+
+async function loadPolls() {
+  const { data: pollData, error: pollError } = await supabase
+    .from("pulse_polls")
+    .select("*")
+    .eq("active", true)
+    .order("created_at", { ascending: false });
+
+  if (pollError) {
+    console.error(pollError);
+    return;
   }
+
+  const { data: voteData, error: voteError } = await supabase
+    .from("pulse_poll_votes")
+    .select("*");
+
+  if (voteError) {
+    console.error(voteError);
+    return;
+  }
+
+  setLifetimeVotes((voteData || []).length);
+
+  const pollsWithStats: Poll[] = (pollData || []).map((poll) => {
+    const votes = (voteData || []).filter(
+      (v) => v.poll_id === poll.id
+    );
+
+    const standByVotes = votes.filter(
+      (v) => v.vote_type === "standby"
+    ).length;
+
+    const walkAwayVotes = votes.filter(
+      (v) => v.vote_type === "walkaway"
+    ).length;
+
+    const totalVotes = standByVotes + walkAwayVotes;
+
+    return {
+      ...poll,
+      standBy:
+        totalVotes > 0
+          ? Math.round((standByVotes / totalVotes) * 100)
+          : 0,
+
+      walkAway:
+        totalVotes > 0
+          ? Math.round((walkAwayVotes / totalVotes) * 100)
+          : 0,
+
+      totalVotes,
+    };
+  });
+
+  setPolls(pollsWithStats);
+}
+  
+
+  async function handleVote(
+  pollId: number,
+  choice: "standby" | "walkaway"
+) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    alert("Please login to vote.");
+    return;
+  }
+
+  const { data: existingVote } = await supabase
+    .from("pulse_poll_votes")
+    .select("*")
+    .eq("poll_id", pollId)
+    .eq("user_id", user.id)
+    .single();
+
+  if (existingVote) {
+    alert("You already voted on this poll.");
+    return;
+  }
+
+  const { error } = await supabase
+    .from("pulse_poll_votes")
+    .insert({
+      poll_id: pollId,
+      user_id: user.id,
+      vote_type: choice,
+    });
+
+  if (error) {
+    console.error(error);
+    alert(error.message);
+    return;
+  }
+
+  setSelections((prev) => ({
+    ...prev,
+    [pollId]: choice,
+  }));
+
+  await loadPolls();
+}
 
   return (
     <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
@@ -118,7 +196,7 @@ export default function PulsePollsPage() {
             <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400" />
             <div className="px-6 py-4">
               <div className="text-3xl md:text-4xl font-black text-yellow-400">
-                {LIFETIME_VOTES.toLocaleString()}
+                {lifetimeVotes.toLocaleString()}
               </div>
               <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-0.5">
                 Lifetime Votes Cast
@@ -127,7 +205,7 @@ export default function PulsePollsPage() {
             <div className="h-px sm:h-auto sm:w-px bg-yellow-400/20" />
             <div className="px-6 py-4">
               <div className="text-3xl md:text-4xl font-black text-yellow-400">
-                {POLLS.length}
+                {polls.length}
               </div>
               <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mt-0.5">
                 Active Polls
@@ -138,7 +216,7 @@ export default function PulsePollsPage() {
 
         {/* Poll grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {POLLS.map((poll) => {
+          {polls.map((poll) => {
             const selected = selections[poll.id] ?? null;
             return (
               <PollCard
@@ -172,7 +250,7 @@ export default function PulsePollsPage() {
 
 // ── Poll Card ─────────────────────────────────────────────────────────────────
 interface PollCardProps {
-  poll: typeof POLLS[number];
+  poll: Poll;
   selected: "standby" | "walkaway" | null;
   onVote: (choice: "standby" | "walkaway") => void;
 }
@@ -186,19 +264,26 @@ function PollCard({ poll, selected, onVote }: PollCardProps) {
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
-      {/* Placeholder image */}
-      <div className="w-full aspect-video bg-white/[0.03] border-b border-white/10 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-transparent" />
-        <div className="text-center px-4">
-          <div className="text-4xl font-black text-white/5 leading-none select-none">
-            POLL
-          </div>
-        </div>
-        {/* Poll number badge */}
-        <div className="absolute top-3 left-3 bg-yellow-400 text-black text-xs font-black px-2 py-0.5 uppercase tracking-wider">
-          #{poll.id}
-        </div>
+      <div className="w-full aspect-video border-b border-white/10 relative overflow-hidden">
+  {poll.image_url ? (
+    <img
+      src={poll.image_url}
+      alt={poll.question}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    <div className="w-full h-full bg-white/[0.03] flex items-center justify-center">
+      <div className="text-4xl font-black text-white/5">
+        POLL
       </div>
+    </div>
+  )}
+
+  <div className="absolute top-3 left-3 bg-yellow-400 text-black text-xs font-black px-2 py-0.5 uppercase tracking-wider">
+    #{poll.id}
+  </div>
+</div>
+        
 
       {/* Card body */}
       <div className="p-5 flex flex-col gap-4 flex-1">
