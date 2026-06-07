@@ -93,6 +93,7 @@ function VideoCard({ video }: { video: CivicVideo }) {
   const [localSupport, setLocalSupport] = useState(video.support_count);
   const [localUnsupport, setLocalUnsupport] = useState(video.unsupport_count);
   const [showVideo, setShowVideo] = useState(false);
+  
 
   const pulseScore = calcPulseScore(localSupport, localUnsupport, video.view_count);
 
@@ -403,7 +404,7 @@ function Sidebar({ videos }: { videos: CivicVideo[] }) {
 export default function Pulse50NowPage() {
   const [videos, setVideos] = useState<CivicVideo[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -431,41 +432,99 @@ export default function Pulse50NowPage() {
   ).length;
 
   return (
-    <main className="min-h-screen bg-black text-white relative overflow-x-hidden pb-16 md:pb-0">
+    <main className="min-h-screen bg-black text-white relative overflow-x-hidden">
 
 
       {/* ── NAV ── */}
-      <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 md:px-6 py-4">
-          <Link href="/" className="text-2xl md:text-3xl font-black tracking-tight">
-            <span className="text-white">Pulse</span>
-            <span className="text-yellow-400">50</span>
-            <span className="ml-2 text-xs uppercase tracking-widest text-yellow-400/80">NOW</span>
-          </Link>
-          <div className="flex items-center gap-4 md:gap-6">
-            <Link
-              href="/representatives"
-              className="hidden md:block text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider"
-            >
-              Representatives
-            </Link>
-            <Link
-              href="/trending"
-              className="hidden md:block text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider"
-            >
-              Trending
-            </Link>
-            <Link
-              href="/"
-              className="border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-300 hover:border-yellow-400 hover:text-yellow-400 transition"
-            >
-              Home
-            </Link>
-          </div>
-        </div>
-      </nav>
+<nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
+  <div className="mx-auto flex max-w-7xl items-center justify-between px-4 md:px-6 py-4">
+    <Link href="/" className="text-2xl md:text-3xl font-black tracking-tight">
+      <span className="text-white">Pulse</span>
+      <span className="text-yellow-400">50</span>
+      <span className="ml-2 text-xs uppercase tracking-widest text-yellow-400/80">
+        NOW
+      </span>
+    </Link>
 
-      {/* ── HERO ── */}
+    <div className="hidden md:flex items-center gap-6">
+      <Link
+        href="/representatives"
+        className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider"
+      >
+        Representatives
+      </Link>
+
+      <Link
+        href="/trending"
+        className="text-sm font-bold text-gray-400 hover:text-yellow-400 transition uppercase tracking-wider"
+      >
+        Trending
+      </Link>
+
+      <Link
+        href="/"
+        className="border border-white/10 px-4 py-2 text-xs font-black uppercase tracking-wider text-gray-300 hover:border-yellow-400 hover:text-yellow-400 transition"
+      >
+        Home
+      </Link>
+    </div>
+
+    <button
+      className="md:hidden p-2 text-gray-400 hover:text-white"
+      onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+    >
+      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {mobileMenuOpen ? (
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
+        ) : (
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
+        )}
+      </svg>
+    </button>
+  </div>
+
+  {mobileMenuOpen && (
+    <div className="md:hidden border-t border-white/10 bg-black px-4 py-6">
+      <div className="grid grid-cols-2 gap-y-6">
+        <Link href="/representatives" className="text-xl font-black uppercase tracking-wider text-gray-400">
+          Directory
+        </Link>
+
+        <Link href="/trending" className="text-xl font-black uppercase tracking-wider text-gray-400">
+          Trending
+        </Link>
+
+        <Link href="/now" className="text-xl font-black uppercase tracking-wider text-yellow-400">
+          PulseNow
+        </Link>
+
+        <Link href="/now/townhall" className="text-xl font-black uppercase tracking-wider text-gray-400">
+          TownHall
+        </Link>
+
+        <Link href="/polls" className="text-xl font-black uppercase tracking-wider text-gray-400">
+          Polls
+        </Link>
+
+        <Link href="/login" className="text-xl font-black uppercase tracking-wider text-gray-400">
+          Account
+        </Link>
+      </div>
+    </div>
+  )}
+</nav>
+
+{/* ── HERO ── */}
       <section className="relative z-10 border-b border-white/10 px-4 md:px-6 py-12 md:py-16 overflow-hidden">
         <div
           className="absolute inset-0 pointer-events-none opacity-[0.03]"
