@@ -566,7 +566,7 @@ export default function Pulse50NowPage() {
     {filtered.map((video) => (
       <div
         key={video.id}
-        className="w-[320px] sm:w-[360px] md:w-[420px] flex-shrink-0"
+         className="w-[320px] sm:w-[360px] md:w-[420px] flex-shrink-0"
       >
         <VideoCard video={video} />
       </div>
@@ -574,6 +574,24 @@ export default function Pulse50NowPage() {
   </div>
 </div>
 )}
+<div className="mt-6 border border-yellow-400/20 bg-yellow-400/[0.03] p-5">
+  <h3 className="text-yellow-400 text-sm font-black uppercase tracking-widest mb-2">
+    Join TownHall
+  </h3>
+
+  <p className="text-gray-500 text-sm mb-4">
+    Discuss the issues you see in Pulse50 Now.
+  </p>
+
+  <Link
+    href="/now/townhall"
+    className="inline-flex bg-yellow-400 text-black px-5 py-3 text-xs font-black uppercase tracking-wider hover:bg-yellow-300 transition"
+  >
+    Join TownHall
+  </Link>
+</div>
+
+
 
 </div>
           {/* Sidebar — below feed on mobile, right column on desktop */}
