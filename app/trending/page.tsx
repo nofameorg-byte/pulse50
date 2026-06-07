@@ -7,7 +7,7 @@ import { supabase } from "../lib/supabase";
 import VoteCard from "../components/VoteCard";
 import { sortByMode } from "../lib/trending";
 import type { SortMode as TrendingSortMode } from "../lib/trending";
-import MobileNav from "../components/MobileNav";
+
 
 interface TrendingItem {
   id: number;
@@ -106,7 +106,7 @@ export default function TrendingPage() {
   const sorted = sortByMode(items, sortMode);
 
   return (
-    <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
+    <main className="min-h-screen bg-black text-white">
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
@@ -133,13 +133,54 @@ export default function TrendingPage() {
           </div>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
-            <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
-            <Link href="/trending" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/polls" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
-            
-          </div>
-        )}
+  <div className="md:hidden border-t border-white/10 bg-black px-4 py-6">
+    <div className="grid grid-cols-2 gap-y-6">
+
+      <Link
+        href="/representatives"
+        className="text-xl font-black uppercase tracking-wider text-yellow-400"
+      >
+        Directory
+      </Link>
+
+      <Link
+        href="/trending"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Trending
+      </Link>
+
+      <Link
+        href="/now"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        PulseNow
+      </Link>
+
+      <Link
+        href="/now/townhall"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        TownHall
+      </Link>
+
+      <Link
+        href="/polls"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Polls
+      </Link>
+
+      <Link
+        href="/login"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Account
+      </Link>
+
+    </div>
+  </div>
+)}
       </nav>
 
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-12">
@@ -242,7 +283,7 @@ export default function TrendingPage() {
           <p className="text-center text-xs text-gray-600">Public opinion platform. Not affiliated with any government entity.</p>
         </div>
       </footer>
-      <MobileNav />
+      
     </main>
   );
 }

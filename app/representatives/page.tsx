@@ -231,7 +231,7 @@ const matchState =
   );
 
   return (
-    <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
+    <main className="min-h-screen bg-black text-white">
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">

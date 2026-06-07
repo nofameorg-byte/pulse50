@@ -142,7 +142,7 @@ async function loadPolls() {
 }
 
   return (
-    <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
+    <main className="min-h-screen bg-black text-white">
 
       {/* Nav */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
@@ -170,13 +170,54 @@ async function loadPolls() {
           </button>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
-            <Link href="/representatives" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Directory</Link>
-            <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/now" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Now</Link>
-            <Link href="/polls" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Polls</Link>
-          </div>
-        )}
+  <div className="md:hidden border-t border-white/10 bg-black px-4 py-6">
+    <div className="grid grid-cols-2 gap-y-6">
+
+      <Link
+        href="/representatives"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Directory
+      </Link>
+
+      <Link
+        href="/trending"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Trending
+      </Link>
+
+      <Link
+        href="/now"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        PulseNow
+      </Link>
+
+      <Link
+        href="/now/townhall"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        TownHall
+      </Link>
+
+      <Link
+        href="/polls"
+        className="text-xl font-black uppercase tracking-wider text-yellow-400"
+      >
+        Polls
+      </Link>
+
+      <Link
+        href="/login"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Account
+      </Link>
+
+    </div>
+  </div>
+)}
       </nav>
 
       <div className="mx-auto max-w-7xl px-4 md:px-6 py-8 md:py-12">
@@ -251,7 +292,7 @@ async function loadPolls() {
         </div>
       </footer>
 
-      <MobileNav />
+    
     </main>
   );
 }

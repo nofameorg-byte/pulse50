@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "./lib/supabase";
 import ShareMenu from "./components/ShareMenu";
-import MobileNav from "./components/MobileNav";
+
 
 interface Representative {
   id: number;
@@ -154,7 +154,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white pb-16 md:pb-0">
+    <main className="min-h-screen bg-black text-white">
 
       {/* ── NAV ── */}
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/90 backdrop-blur-xl">
@@ -620,7 +620,7 @@ export default function Home() {
           </div>
         </div>
       </footer>
-      <MobileNav />
+      
     </main>
   );
 }
