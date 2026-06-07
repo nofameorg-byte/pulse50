@@ -11,7 +11,7 @@ import {
   US_STATES,
   STATE_ABBR,
 } from "../lib/constants";
-import MobileNav from "../components/MobileNav";
+
 
 interface Representative {
   id: number;
@@ -258,12 +258,54 @@ const matchState =
           </div>
         </div>
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-white/10 bg-black px-4 py-4 space-y-3">
-            <Link href="/representatives" className="block text-sm font-bold text-yellow-400 uppercase tracking-wider py-2">Directory</Link>
-            <Link href="/trending" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Trending</Link>
-            <Link href="/polls" className="block text-sm font-bold text-gray-400 uppercase tracking-wider py-2">Polls</Link>
-            
-          </div>
+  <div className="md:hidden border-t border-white/10 bg-black px-4 py-6">
+    <div className="grid grid-cols-2 gap-y-6">
+
+      <Link
+        href="/representatives"
+        className="text-xl font-black uppercase tracking-wider text-yellow-400"
+      >
+        Directory
+      </Link>
+
+      <Link
+        href="/trending"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Trending
+      </Link>
+
+      <Link
+        href="/now"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        PulseNow
+      </Link>
+
+      <Link
+        href="/now/townhall"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        TownHall
+      </Link>
+
+      <Link
+        href="/polls"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Polls
+      </Link>
+
+      <Link
+        href="/login"
+        className="text-xl font-black uppercase tracking-wider text-gray-400"
+      >
+        Account
+      </Link>
+
+    </div>
+  </div>
+)}
         )}
       </nav>
 
@@ -528,7 +570,7 @@ if (cat.id === "city_council") {
           </p>
         </div>
       </footer>
-            <MobileNav />
+            
     </main>
   );
 }
