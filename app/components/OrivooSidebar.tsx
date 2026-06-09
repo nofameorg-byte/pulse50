@@ -5,15 +5,53 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "../lib/supabase";
 
+type Lang = "en" | "es";
+
 type OrivooMessage = {
   id: number | string;
   question: string;
   answer: string;
 };
 
+const text = {
+  en: {
+    civicIntel: "Pulse50 civic intelligence",
+    signedIn: "Signed in:",
+    close: "Close",
+    signOut: "Sign Out",
+    loadingMemory: "Loading ORIVOO memory...",
+    empty: "Ask ORIVOO about bills, laws, officials, or civic issues.",
+    youAsked: "You asked:",
+    response: "ORIVOO Response",
+    thinking: "ORIVOO is thinking...",
+    askAnother: "Ask another question...",
+    ask: "Ask ORIVOO",
+    couldNotAnswer: "ORIVOO could not answer right now.",
+    wentWrong: "Something went wrong with ORIVOO.",
+    hideQuestion: "Hide this question",
+  },
+  es: {
+    civicIntel: "Inteligencia cívica de Pulse50",
+    signedIn: "Sesión iniciada:",
+    close: "Cerrar",
+    signOut: "Cerrar sesión",
+    loadingMemory: "Cargando memoria de ORIVOO...",
+    empty: "Pregúntale a ORIVOO sobre leyes, funcionarios o temas cívicos.",
+    youAsked: "Preguntaste:",
+    response: "Respuesta de ORIVOO",
+    thinking: "ORIVOO está pensando...",
+    askAnother: "Haz otra pregunta...",
+    ask: "Preguntar a ORIVOO",
+    couldNotAnswer: "ORIVOO no pudo responder ahora.",
+    wentWrong: "Algo salió mal con ORIVOO.",
+    hideQuestion: "Ocultar esta pregunta",
+  },
+};
+
 function OrivooSidebar() {
   const router = useRouter();
 
+  const [lang, setLang] = useState<Lang>("en");
   const [open, setOpen] = useState(false);
   const [sessionId, setSessionId] = useState("");
   const [userId, setUserId] = useState("");
@@ -26,6 +64,25 @@ function OrivooSidebar() {
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const historyReadyRef = useRef(false);
 
+  const t = text[lang];
+
+  useEffect(() => {
+    function loadLang() {
+      const saved = localStorage.getItem("pulse50_lang");
+      setLang(saved === "es" ? "es" : "en");
+    }
+
+    loadLang();
+
+    window.addEventListener("storage", loadLang);
+    window.addEventListener("focus", loadLang);
+
+    return () => {
+      window.removeEventListener("storage", loadLang);
+      window.removeEventListener("focus", loadLang);
+    };
+  }, []);
+
   function getMessagesStorageKey(currentUserId: string) {
     return `orivoo_messages_${currentUserId}`;
   }
@@ -37,17 +94,12 @@ function OrivooSidebar() {
   function getDeletedMessageIds(currentUserId: string) {
     if (!currentUserId) return [];
 
-    const deletedKey = getDeletedStorageKey(currentUserId);
-    const savedDeleted = localStorage.getItem(deletedKey);
-
+    const savedDeleted = localStorage.getItem(getDeletedStorageKey(currentUserId));
     if (!savedDeleted) return [];
 
     try {
       const parsed = JSON.parse(savedDeleted);
-
-      if (Array.isArray(parsed)) {
-        return parsed.map((item) => String(item));
-      }
+      if (Array.isArray(parsed)) return parsed.map((item) => String(item));
     } catch {
       console.error("Could not restore deleted ORIVOO message ids");
     }
@@ -55,15 +107,9 @@ function OrivooSidebar() {
     return [];
   }
 
-  function filterDeletedMessages(
-    incomingMessages: OrivooMessage[],
-    currentUserId: string
-  ) {
+  function filterDeletedMessages(incomingMessages: OrivooMessage[], currentUserId: string) {
     const deletedIds = getDeletedMessageIds(currentUserId);
-
-    return incomingMessages.filter(
-      (item) => !deletedIds.includes(String(item.id))
-    );
+    return incomingMessages.filter((item) => !deletedIds.includes(String(item.id)));
   }
 
   useEffect(() => {
@@ -87,7 +133,6 @@ function OrivooSidebar() {
       }
 
       const sessionKey = `orivoo_session_id_${currentUserId}`;
-
       let savedSessionId = localStorage.getItem(sessionKey);
 
       if (!savedSessionId) {
@@ -138,36 +183,21 @@ function OrivooSidebar() {
         }
       }
 
-      if (!restoredFromLocal) {
-        setMessages([]);
-      }
+      if (!restoredFromLocal) setMessages([]);
 
       try {
         const res = await fetch("/api/orivoo/history", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            sessionId,
-            userId,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId, userId }),
         });
 
         const data = await res.json();
 
         if (Array.isArray(data?.messages) && data.messages.length > 0) {
-          const filteredServerMessages = filterDeletedMessages(
-            data.messages,
-            userId
-          );
-
+          const filteredServerMessages = filterDeletedMessages(data.messages, userId);
           setMessages(filteredServerMessages);
-
-          localStorage.setItem(
-            storageKey,
-            JSON.stringify(filteredServerMessages)
-          );
+          localStorage.setItem(storageKey, JSON.stringify(filteredServerMessages));
         }
       } catch (error) {
         console.error("ORIVOO history load error:", error);
@@ -184,9 +214,7 @@ function OrivooSidebar() {
     if (!sessionId || !userId) return;
     if (!historyReadyRef.current) return;
 
-    const storageKey = getMessagesStorageKey(userId);
-
-    localStorage.setItem(storageKey, JSON.stringify(messages));
+    localStorage.setItem(getMessagesStorageKey(userId), JSON.stringify(messages));
   }, [messages, userId, sessionId]);
 
   useEffect(() => {
@@ -198,16 +226,16 @@ function OrivooSidebar() {
     });
   }, [messages, loading, historyLoading, open]);
 
-useEffect(() => {
-  if (!open) return;
+  useEffect(() => {
+    if (!open) return;
 
-  const originalOverflow = document.body.style.overflow;
-  document.body.style.overflow = "hidden";
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-  return () => {
-    document.body.style.overflow = originalOverflow;
-  };
-}, [open]);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
 
   function handleLauncherClick() {
     if (!userId) {
@@ -227,7 +255,7 @@ useEffect(() => {
     const pendingMessage = {
       id: pendingId,
       question: currentQuestion,
-      answer: "ORIVOO is thinking...",
+      answer: t.thinking,
     };
 
     setLoading(true);
@@ -237,14 +265,13 @@ useEffect(() => {
     try {
       const res = await fetch("/api/orivoo", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: currentQuestion,
           history: messages.slice(0, 10),
           sessionId,
           userId,
+          language: lang,
         }),
       });
 
@@ -253,10 +280,7 @@ useEffect(() => {
       setMessages((prev) =>
         prev.map((item) =>
           item.id === pendingId
-            ? {
-                ...item,
-                answer: data.reply || "ORIVOO could not answer right now.",
-              }
+            ? { ...item, answer: data.reply || t.couldNotAnswer }
             : item
         )
       );
@@ -265,12 +289,7 @@ useEffect(() => {
 
       setMessages((prev) =>
         prev.map((item) =>
-          item.id === pendingId
-            ? {
-                ...item,
-                answer: "Something went wrong with ORIVOO.",
-              }
-            : item
+          item.id === pendingId ? { ...item, answer: t.wentWrong } : item
         )
       );
     }
@@ -308,10 +327,7 @@ useEffect(() => {
 
     setMessages((prev) => {
       const nextMessages = prev.filter((item) => String(item.id) !== idString);
-      const storageKey = getMessagesStorageKey(userId);
-
-      localStorage.setItem(storageKey, JSON.stringify(nextMessages));
-
+      localStorage.setItem(getMessagesStorageKey(userId), JSON.stringify(nextMessages));
       return nextMessages;
     });
   }
@@ -333,11 +349,7 @@ useEffect(() => {
             height={105}
             priority
             loading="eager"
-            style={{
-              width: "105px",
-              height: "105px",
-              objectFit: "contain",
-            }}
+            style={{ width: "105px", height: "105px", objectFit: "contain" }}
             className="drop-shadow-[0_0_25px_rgba(255,215,0,0.9)]"
           />
         </button>
@@ -361,17 +373,13 @@ useEffect(() => {
                   />
 
                   <div>
-                    <h2 className="text-2xl font-bold text-yellow-400">
-                      ORIVOO
-                    </h2>
+                    <h2 className="text-2xl font-bold text-yellow-400">ORIVOO</h2>
 
-                    <p className="text-sm text-zinc-400">
-                      Pulse50 civic intelligence
-                    </p>
+                    <p className="text-sm text-zinc-400">{t.civicIntel}</p>
 
                     {userEmail && (
                       <p className="mt-1 max-w-[200px] truncate text-xs text-zinc-500">
-                        Signed in: {userEmail}
+                        {t.signedIn} {userEmail}
                       </p>
                     )}
                   </div>
@@ -382,7 +390,7 @@ useEffect(() => {
                   onClick={() => setOpen(false)}
                   className="rounded-lg border border-zinc-700 px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-800 relative -top-7 md:top-0"
                 >
-                  Close
+                  {t.close}
                 </button>
               </div>
 
@@ -391,18 +399,18 @@ useEffect(() => {
                 onClick={signOut}
                 className="mt-4 w-full rounded-lg border border-red-500/40 px-3 py-2 text-sm font-bold text-red-400 hover:bg-red-500/10"
               >
-                Sign Out
+                {t.signOut}
               </button>
             </div>
 
             <div className="flex-1 overflow-y-auto p-5">
               {historyLoading ? (
                 <div className="rounded-xl border border-yellow-500/20 bg-zinc-950 p-4 text-sm text-yellow-300">
-                  Loading ORIVOO memory...
+                  {t.loadingMemory}
                 </div>
               ) : orderedMessages.length === 0 ? (
                 <div className="rounded-xl border border-yellow-500/20 bg-zinc-950 p-3 text-sm text-zinc-400">
-                  Ask ORIVOO about bills, laws, officials, or civic issues.
+                  {t.empty}
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -415,13 +423,13 @@ useEffect(() => {
                         <button
                           type="button"
                           onClick={() => deleteMessage(item.id)}
-                          title="Hide this question"
+                          title={t.hideQuestion}
                           className="mt-1 h-5 w-5 shrink-0 rounded border border-yellow-400/70 hover:bg-yellow-400"
                         />
 
                         <div className="rounded-lg border border-yellow-500/20 bg-black/60 p-3 text-sm text-yellow-100">
                           <span className="font-bold text-yellow-400">
-                            You asked:
+                            {t.youAsked}
                           </span>{" "}
                           {item.question}
                         </div>
@@ -429,7 +437,7 @@ useEffect(() => {
 
                       <div className="rounded-lg border border-zinc-800 bg-zinc-900 p-3">
                         <h3 className="mb-2 font-bold text-yellow-400">
-                          ORIVOO Response
+                          {t.response}
                         </h3>
 
                         <p className="whitespace-pre-wrap text-sm leading-6 text-zinc-100">
@@ -443,7 +451,7 @@ useEffect(() => {
 
               {loading && (
                 <div className="mt-4 rounded-xl border border-yellow-500/20 bg-zinc-950 p-4 text-sm text-yellow-300">
-                  ORIVOO is thinking...
+                  {t.thinking}
                 </div>
               )}
 
@@ -452,21 +460,17 @@ useEffect(() => {
 
             <div className="border-t border-zinc-800 bg-black p-5 pb-10 md:pb-5">
               <textarea
-  value={message}
-  onChange={(e) => {
-    setMessage(e.target.value);
-    e.target.style.height = "auto";
-    e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
-  }}
-  placeholder={
-    loading
-      ? "ORIVOO is thinking..."
-      : "Ask another question..."
-  }
-  disabled={loading}
-  rows={1}
-  className="min-h-[80px] max-h-[180px] w-full resize-none overflow-y-auto rounded-2xl border border-yellow-500/30 bg-zinc-900 p-4 text-white outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-60"
-/>
+                value={message}
+                onChange={(e) => {
+                  setMessage(e.target.value);
+                  e.target.style.height = "auto";
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 180)}px`;
+                }}
+                placeholder={loading ? t.thinking : t.askAnother}
+                disabled={loading}
+                rows={1}
+                className="min-h-[80px] max-h-[180px] w-full resize-none overflow-y-auto rounded-2xl border border-yellow-500/30 bg-zinc-900 p-4 text-white outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400/40 disabled:opacity-60"
+              />
 
               <button
                 type="button"
@@ -474,7 +478,7 @@ useEffect(() => {
                 disabled={loading || !message.trim()}
                 className="mt-4 w-full rounded-xl bg-yellow-400 px-5 py-3 font-bold text-black hover:bg-yellow-300 disabled:opacity-60"
               >
-                {loading ? "ORIVOO is thinking..." : "Ask ORIVOO"}
+                {loading ? t.thinking : t.ask}
               </button>
             </div>
           </div>

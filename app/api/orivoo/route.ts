@@ -18,6 +18,8 @@ type TavilyResult = {
   content?: string;
 };
 
+type Lang = "en" | "es";
+
 const supabase =
   process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
     ? createClient(
@@ -26,33 +28,70 @@ const supabase =
       )
     : null;
 
-function needsLiveCivicVerification(
-  message: string,
-  history: OrivooHistoryItem[] = []
-) {
-  const text = message.toLowerCase();
-  const noSearchPhrases = [
-  "thanks",
-  "thank you",
-  "ok thanks",
-  "cool",
-  "bet",
-  "lol",
-  "haha",
-  "hey",
-  "hello",
-  "hi",
-  "good morning",
-  "good night",
-  "gn",
-];
+function getLanguageInstruction(language: Lang) {
+  if (language === "es") {
+    return `
+LANGUAGE MODE:
+The user selected Spanish.
+Respond in clear, natural Spanish unless the user specifically asks for another language.
+Keep civic terms understandable for everyday people.
+If citing U.S. civic offices, you may keep official titles in English when needed, but explain them in Spanish.
+`;
+  }
 
-if (
-  noSearchPhrases.includes(text.trim()) ||
-  text.trim().length < 3
-) {
-  return false;
+  return `
+LANGUAGE MODE:
+The user selected English.
+Respond in clear, natural English unless the user specifically asks for another language.
+`;
 }
+
+function fallbackText(language: Lang, key: "required" | "orivooError" | "notEnough" | "somethingWrong") {
+  const copy = {
+    en: {
+      required: "Message is required.",
+      orivooError: "ORIVOO could not answer right now.",
+      notEnough: "I don’t have enough verified information on that yet.",
+      somethingWrong: "Something went wrong with ORIVOO.",
+    },
+    es: {
+      required: "El mensaje es obligatorio.",
+      orivooError: "ORIVOO no pudo responder ahora.",
+      notEnough: "Todavía no tengo suficiente información verificada sobre eso.",
+      somethingWrong: "Algo salió mal con ORIVOO.",
+    },
+  };
+
+  return copy[language][key];
+}
+
+function needsLiveCivicVerification(message: string, history: OrivooHistoryItem[] = []) {
+  const text = message.toLowerCase();
+
+  const noSearchPhrases = [
+    "thanks",
+    "thank you",
+    "ok thanks",
+    "cool",
+    "bet",
+    "lol",
+    "haha",
+    "hey",
+    "hello",
+    "hi",
+    "good morning",
+    "good night",
+    "gn",
+    "gracias",
+    "ok gracias",
+    "hola",
+    "buenos días",
+    "buenas noches",
+  ];
+
+  if (noSearchPhrases.includes(text.trim()) || text.trim().length < 3) {
+    return false;
+  }
 
   const liveKeywords = [
     "current",
@@ -115,6 +154,50 @@ if (
     "officeholder",
     "who handles",
     "who represents",
+
+    "actual",
+    "ahora",
+    "hoy",
+    "último",
+    "ultima",
+    "última",
+    "actualizado",
+    "quién es",
+    "quien es",
+    "quiénes son",
+    "quienes son",
+    "juez",
+    "jueces",
+    "justicia",
+    "corte",
+    "tribunal",
+    "alcalde",
+    "sheriff",
+    "gobernador",
+    "senador",
+    "representante",
+    "concejo",
+    "comisionado",
+    "secretario de estado",
+    "ley",
+    "proyecto de ley",
+    "estatuto",
+    "ordenanza",
+    "legislación",
+    "elección",
+    "votación",
+    "boleta",
+    "audiencia",
+    "reunión",
+    "condado",
+    "ciudad",
+    "estado",
+    "oficial",
+    "lista",
+    "miembros",
+    "funcionarios",
+    "quién me representa",
+    "quien me representa",
   ];
 
   const followUpTriggers = [
@@ -140,6 +223,23 @@ if (
     "what about them",
     "break it down",
     "go deeper",
+    "sí",
+    "si",
+    "continúa",
+    "continua",
+    "sigue",
+    "qué pasa con",
+    "que pasa con",
+    "la lista",
+    "lista",
+    "en orden",
+    "quién más",
+    "quien más",
+    "miembros",
+    "quiénes son",
+    "quienes son",
+    "desglósalo",
+    "explica más",
   ];
 
   const recentContext = history
@@ -172,32 +272,30 @@ if (
     "bill",
     "law",
     "ordinance",
+    "juez",
+    "jueces",
+    "corte",
+    "tribunal",
+    "alcalde",
+    "gobernador",
+    "senador",
+    "representante",
+    "elección",
+    "ley",
   ];
 
   const isCivicFollowUp =
     followUpTriggers.some((word) => text.includes(word)) &&
     civicContextWords.some((word) => recentContext.includes(word));
 
-  return (
-    liveKeywords.some((keyword) => text.includes(keyword)) ||
-    isCivicFollowUp
-  );
+  return liveKeywords.some((keyword) => text.includes(keyword)) || isCivicFollowUp;
 }
 
-function getRecentTopicFromHistory(
-  history: OrivooHistoryItem[]
-) {
+function getRecentTopicFromHistory(history: OrivooHistoryItem[]) {
   const recent = history
     .slice(0, 2)
     .reverse()
-    .map((item) => {
-      const question =
-        typeof item?.question === "string"
-          ? item.question
-          : "";
-
-      return question;
-    })
+    .map((item) => (typeof item?.question === "string" ? item.question : ""))
     .join(" | ")
     .trim();
 
@@ -207,7 +305,6 @@ function getRecentTopicFromHistory(
 function buildSearchMessage(message: string, history: OrivooHistoryItem[]) {
   const lowerMessage = message.toLowerCase();
   const recentTopic = getRecentTopicFromHistory(history);
-
   const isShortFollowUp = message.trim().length < 45;
 
   const asksForList =
@@ -216,9 +313,19 @@ function buildSearchMessage(message: string, history: OrivooHistoryItem[]) {
     lowerMessage.includes("makeup") ||
     lowerMessage.includes("members") ||
     lowerMessage.includes("who else") ||
-    lowerMessage.includes("who are they");
+    lowerMessage.includes("who are they") ||
+    lowerMessage.includes("lista") ||
+    lowerMessage.includes("en orden") ||
+    lowerMessage.includes("miembros") ||
+    lowerMessage.includes("quién más") ||
+    lowerMessage.includes("quien más") ||
+    lowerMessage.includes("quiénes son") ||
+    lowerMessage.includes("quienes son");
 
-  const asksWhatAbout = lowerMessage.includes("what about");
+  const asksWhatAbout =
+    lowerMessage.includes("what about") ||
+    lowerMessage.includes("qué pasa con") ||
+    lowerMessage.includes("que pasa con");
 
   if (recentTopic && asksForList) {
     return `${recentTopic}\n\nFollow-up request: current official members list in order.`;
@@ -241,7 +348,8 @@ function buildUniversalCivicQueries(searchMessage: string) {
   if (
     text.includes("u.s. president") ||
     text.includes("us president") ||
-    text.includes("president of the united states")
+    text.includes("president of the united states") ||
+    text.includes("presidente de estados unidos")
   ) {
     return [
       `${searchMessage} current official site:whitehouse.gov`,
@@ -254,7 +362,8 @@ function buildUniversalCivicQueries(searchMessage: string) {
     text.includes("u.s. supreme court") ||
     text.includes("us supreme court") ||
     text.includes("supreme court justice") ||
-    text.includes("supreme court justices")
+    text.includes("supreme court justices") ||
+    text.includes("corte suprema")
   ) {
     return [
       `${searchMessage} current justices official site:supremecourt.gov`,
@@ -266,7 +375,10 @@ function buildUniversalCivicQueries(searchMessage: string) {
   if (
     text.includes("court") ||
     text.includes("judge") ||
-    text.includes("justice")
+    text.includes("justice") ||
+    text.includes("corte") ||
+    text.includes("tribunal") ||
+    text.includes("juez")
   ) {
     return [
       `${searchMessage} official court website current judges justices members`,
@@ -280,7 +392,11 @@ function buildUniversalCivicQueries(searchMessage: string) {
     text.includes("vote") ||
     text.includes("ballot") ||
     text.includes("polling") ||
-    text.includes("deadline")
+    text.includes("deadline") ||
+    text.includes("elección") ||
+    text.includes("eleccion") ||
+    text.includes("votar") ||
+    text.includes("boleta")
   ) {
     return [
       `${searchMessage} official election office current`,
@@ -320,9 +436,7 @@ async function runTavilySearch(query: string) {
   }
 
   const data = await response.json();
-  const results: TavilyResult[] = Array.isArray(data?.results)
-    ? data.results
-    : [];
+  const results: TavilyResult[] = Array.isArray(data?.results) ? data.results : [];
 
   if (results.length === 0) return "";
 
@@ -340,38 +454,17 @@ async function runTavilySearch(query: string) {
 }
 
 const KNOWN_BILLS = {
-  "hr 1": {
-    congress: "119",
-    type: "hr",
-    number: "1",
-  },
-
-  "one big beautiful bill": {
-    congress: "119",
-    type: "hr",
-    number: "1",
-  },
-
-  "s 5": {
-    congress: "119",
-    type: "s",
-    number: "5",
-  },
-
-  "laken riley act": {
-    congress: "119",
-    type: "s",
-    number: "5",
-  },
+  "hr 1": { congress: "119", type: "hr", number: "1" },
+  "one big beautiful bill": { congress: "119", type: "hr", number: "1" },
+  "s 5": { congress: "119", type: "s", number: "5" },
+  "laken riley act": { congress: "119", type: "s", number: "5" },
 };
 
 function detectCongressBill(message: string) {
   const text = message.toLowerCase();
 
   for (const [name, bill] of Object.entries(KNOWN_BILLS)) {
-    if (text.includes(name)) {
-      return bill;
-    }
+    if (text.includes(name)) return bill;
   }
 
   const hrMatch =
@@ -379,37 +472,24 @@ function detectCongressBill(message: string) {
     text.match(/\bh\.r\.\s*(\d+)\b/i);
 
   if (hrMatch) {
-    return {
-      congress: "119",
-      type: "hr",
-      number: hrMatch[1],
-    };
+    return { congress: "119", type: "hr", number: hrMatch[1] };
   }
 
-  const senateMatch =
-    text.match(/\bs\.?\s*(\d+)\b/i);
+  const senateMatch = text.match(/\bs\.?\s*(\d+)\b/i);
 
   if (senateMatch) {
-    return {
-      congress: "119",
-      type: "s",
-      number: senateMatch[1],
-    };
+    return { congress: "119", type: "s", number: senateMatch[1] };
   }
 
   return null;
 }
 
-async function getCongressBillContext(
-  message: string
-) {
+async function getCongressBillContext(message: string) {
   try {
     const bill = detectCongressBill(message);
-
     if (!bill) return "";
 
     const apiKey = process.env.CONGRESS_API_KEY;
-
     if (!apiKey) return "";
 
     const billResponse = await fetch(
@@ -429,22 +509,10 @@ async function getCongressBillContext(
     if (summaryResponse.ok) {
       const summaryData = await summaryResponse.json();
 
-      summaryText =
-  (
-    summaryData?.summaries?.[0]?.text || ""
-  )
-  .replace(/<[^>]*>/g, "")
-  .slice(0, 5000);
+      summaryText = (summaryData?.summaries?.[0]?.text || "")
+        .replace(/<[^>]*>/g, "")
+        .slice(0, 5000);
     }
-
-    console.log(
-  "SUMMARY LENGTH:",
-  summaryText.length
-);
-
-console.log(
-  summaryText.slice(0, 500)
-);
 
     return `
 CONGRESS BILL DATA
@@ -473,12 +541,10 @@ ${billData?.bill?.congress || ""}
   }
 }
 
-
 async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[]) {
   try {
     const searchMessage = buildSearchMessage(message, history);
     const queries = buildUniversalCivicQueries(searchMessage);
-
     const allResults: string[] = [];
 
     for (const query of queries) {
@@ -488,9 +554,7 @@ async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[])
         allResults.push(`SEARCH QUERY: ${query}\n\n${result}`);
       }
 
-      if (allResults.length >= 2) {
-        break;
-      }
+      if (allResults.length >= 2) break;
     }
 
     return allResults.join("\n\n---\n\n");
@@ -500,10 +564,7 @@ async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[])
   }
 }
 
-async function getSavedMemory(
-  sessionId: string,
-  userId?: string
-) {
+async function getSavedMemory(sessionId: string, userId?: string) {
   if (!supabase || !sessionId) return [];
 
   let query = supabase
@@ -513,9 +574,7 @@ async function getSavedMemory(
     .order("created_at", { ascending: false })
     .limit(10);
 
-  if (userId) {
-    query = query.eq("user_id", userId);
-  }
+  if (userId) query = query.eq("user_id", userId);
 
   const { data, error } = await query;
 
@@ -535,14 +594,12 @@ async function saveMemory(
 ) {
   if (!supabase || !sessionId) return;
 
-  const { error } = await supabase
-    .from("orivoo_memory")
-    .insert({
-      session_id: sessionId,
-      user_id: userId || null,
-      user_message: userMessage,
-      orivoo_reply: orivooReply,
-    });
+  const { error } = await supabase.from("orivoo_memory").insert({
+    session_id: sessionId,
+    user_id: userId || null,
+    user_message: userMessage,
+    orivoo_reply: orivooReply,
+  });
 
   if (error) {
     console.error("ORIVOO memory save error:", error);
@@ -552,27 +609,22 @@ async function saveMemory(
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+
     const message = body?.message;
     const sessionId = typeof body?.sessionId === "string" ? body.sessionId : "";
-    const history = Array.isArray(body?.history)
-  ? body.history
-  : [];
+    const history = Array.isArray(body?.history) ? body.history : [];
+    const userId = typeof body?.userId === "string" ? body.userId : "";
 
-const userId =
-  typeof body?.userId === "string"
-    ? body.userId
-    : "";
+    const language: Lang = body?.language === "es" ? "es" : "en";
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
-        { error: "Message is required." },
+        { error: fallbackText(language, "required") },
         { status: 400 }
       );
     }
 
-    const savedMemory = sessionId
-  ? await getSavedMemory(sessionId, userId)
-  : [];
+    const savedMemory = sessionId ? await getSavedMemory(sessionId, userId) : [];
 
     const memoryHistory: OrivooHistoryItem[] = savedMemory.map((item) => ({
       question: item.user_message,
@@ -585,10 +637,8 @@ const userId =
       .slice(0, 12)
       .reverse()
       .flatMap((item: OrivooHistoryItem) => {
-        const question =
-          typeof item?.question === "string" ? item.question.trim() : "";
-        const answer =
-          typeof item?.answer === "string" ? item.answer.trim() : "";
+        const question = typeof item?.question === "string" ? item.question.trim() : "";
+        const answer = typeof item?.answer === "string" ? item.answer.trim() : "";
 
         if (!question || !answer) return [];
 
@@ -598,27 +648,17 @@ const userId =
         ];
       });
 
-    const shouldVerifyLive = needsLiveCivicVerification(
-      message,
-      combinedHistory
-    );
+    const shouldVerifyLive = needsLiveCivicVerification(message, combinedHistory);
 
-    const congressContext =
-  await getCongressBillContext(message);
+    const congressContext = await getCongressBillContext(message);
 
-const liveCivicContext =
-  congressContext ||
-  (
-    shouldVerifyLive
-      ? await searchLiveCivicWeb(
-          message,
-          combinedHistory
-        )
-      : ""
-  );
+    const liveCivicContext =
+      congressContext ||
+      (shouldVerifyLive ? await searchLiveCivicWeb(message, combinedHistory) : "");
 
     const groqMessages = [
       { role: "system" as const, content: ORIVOO_SYSTEM_PROMPT },
+      { role: "system" as const, content: getLanguageInstruction(language) },
       {
         role: "system" as const,
         content: `
@@ -666,7 +706,6 @@ SEARCH RESULTS:
 ${liveCivicContext}
 `
           : `
-
 LIVE CIVIC VERIFICATION STATUS:
 No live source context was found.
 
@@ -674,6 +713,7 @@ CRITICAL RULES:
 - Do NOT refuse basic civic questions.
 - Do NOT say "I don't have enough verified information" for widely known civic facts.
 - Answer common civic facts directly from civic knowledge when safe.
+- If the user selected Spanish, give these answers in Spanish.
 
 Examples of things you SHOULD answer directly:
 - Current U.S. President
@@ -729,7 +769,7 @@ If live search fails:
       console.error("Groq error:", await groqResponse.text());
 
       return NextResponse.json(
-        { error: "ORIVOO could not answer right now." },
+        { error: fallbackText(language, "orivooError") },
         { status: 500 }
       );
     }
@@ -738,21 +778,17 @@ If live search fails:
 
     const reply =
       data?.choices?.[0]?.message?.content ||
-      "I don’t have enough verified information on that yet.";
+      fallbackText(language, "notEnough");
 
     if (sessionId) {
-      await saveMemory(
-  sessionId,
-  userId,
-  message,
-  reply
-);
+      await saveMemory(sessionId, userId, message, reply);
     }
 
     return NextResponse.json({
       reply,
       verified: Boolean(liveCivicContext),
       memory: Boolean(sessionId),
+      language,
     });
   } catch (error) {
     console.error("ORIVOO API error:", error);
