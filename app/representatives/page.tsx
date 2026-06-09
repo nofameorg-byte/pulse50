@@ -144,8 +144,25 @@ function RepresentativesContent() {
 
 console.log("VOTE RESULT:", JSON.stringify(result, null, 2));
     setUserVotes((prev) => ({ ...prev, [repId]: voteType }));
-    setVotingId(null);
-    fetchRepresentatives();
+setVotingId(null);
+
+setRepresentatives((prev) =>
+  prev.map((rep) =>
+    rep.id === repId
+      ? {
+          ...rep,
+          approve_count:
+            voteType === "approve"
+              ? (rep.approve_count || 0) + 1
+              : rep.approve_count || 0,
+          disapprove_count:
+            voteType === "disapprove"
+              ? (rep.disapprove_count || 0) + 1
+              : rep.disapprove_count || 0,
+        }
+      : rep
+  )
+);
   }
 
   async function handleSearchInput(
@@ -380,18 +397,6 @@ const matchState =
                 onClick={async () => {
   setSelectedCategory(cat.id);
 
-  if (cat.id === "mayor") {
-  setRepresentatives([
-    {
-      id: -1,
-      name: "Mayors",
-      title: "Mayors Coming Soon",
-      state: "",
-      category: "Mayors",
-    },
-  ]);
-  return;
-}
 
 if (cat.id === "judge") {
   setRepresentatives([
@@ -437,12 +442,14 @@ if (cat.id === "city_council") {
   .select("*");
 
   if (cat.id === "governor") {
-    query = query.in("category", ["Governor", "Governors"]);
-  } else if (cat.id === "state") {
-    query = query.in("category", ["House", "Senate"]);
-  } else if (cat.id === "sheriff") {
-    query = query.in("category", ["Sheriff", "Sheriffs"]);
-  }
+  query = query.in("category", ["Governor", "Governors"]);
+} else if (cat.id === "state") {
+  query = query.in("category", ["House", "Senate"]);
+} else if (cat.id === "mayor") {
+  query = query.in("category", ["Mayor", "Mayors"]);
+} else if (cat.id === "sheriff") {
+  query = query.in("category", ["Sheriff", "Sheriffs"]);
+}
 
   const { data, error } = await query.limit(100);
 
