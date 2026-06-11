@@ -10,6 +10,7 @@ type TownHallPost = {
   user_id: string;
   content: string;
   created_at: string;
+  hidden?: boolean;
 };
 
 export default function NowTownHallPage() {
@@ -19,14 +20,32 @@ export default function NowTownHallPage() {
   const [posting, setPosting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   useEffect(() => {
-    loadPosts();
-  }, []);
+  loadPosts();
+
+  const channel = supabase
+    .channel("townhall-live")
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "now_townhall_posts",
+      },
+      () => loadPosts()
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+}, []);
 
   async function loadPosts() {
     const { data, error } = await supabase
-      .from("now_townhall_posts")
-      .select("*")
-      .order("created_at", { ascending: false });
+  .from("now_townhall_posts")
+  .select("*")
+  .eq("hidden", false)
+  .order("created_at", { ascending: false });
 
     if (!error) {
       setPosts(data || []);

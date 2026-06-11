@@ -60,7 +60,7 @@ const BLANK_VIDEO: Omit<CivicVideo, "id" | "created_at" | "support_count" | "uns
   enabled: true,
 };
 
-type AdminTab = "reports" | "comments" | "users" | "banned" | "pulsenow" | "polls";
+type AdminTab = "reports" | "comments" | "users" | "banned" | "pulsenow" | "polls" | "townhall";
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function AdminPage() {
@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
   const [polls, setPolls] = useState<any[]>([]);
+  const [townhallPosts, setTownhallPosts] = useState<any[]>([]);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollImageUrl, setPollImageUrl] = useState("");
   const [editingPoll, setEditingPoll] = useState<any | null>(null);
@@ -96,6 +97,7 @@ export default function AdminPage() {
     if (tab === "users")     fetchUsers();
     if (tab === "pulsenow")  fetchVideos();
     if (tab === "polls")     fetchPolls();
+    if (tab === "townhall") fetchTownHall();
   }, [tab, isAdmin]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
@@ -152,6 +154,16 @@ export default function AdminPage() {
     setAllUsers(data || []);
     setLoading(false);
   }
+
+async function fetchTownHall() {
+  const { data } = await supabase
+    .from("now_townhall_posts")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  setTownhallPosts(data || []);
+}
+
 
 async function fetchPolls() {
   const { data, error } = await supabase
@@ -292,6 +304,37 @@ async function handlePollImageUpload(
     flash("Comment deleted.");
     fetchReports(); fetchAllComments();
   }
+
+async function hideTownHall(id: number) {
+  await supabase
+    .from("now_townhall_posts")
+    .update({ hidden: true })
+    .eq("id", id);
+
+  flash("TownHall post hidden.");
+  fetchTownHall();
+}
+
+async function restoreTownHall(id: number) {
+  await supabase
+    .from("now_townhall_posts")
+    .update({ hidden: false })
+    .eq("id", id);
+
+  flash("TownHall post restored.");
+  fetchTownHall();
+}
+
+async function deleteTownHall(id: number) {
+  await supabase
+    .from("now_townhall_posts")
+    .delete()
+    .eq("id", id);
+
+  flash("TownHall post deleted.");
+  fetchTownHall();
+}
+
   async function dismissReport(id: number) {
     await supabase.from("comment_reports").delete().eq("id", id);
     flash("Report dismissed.");
@@ -467,13 +510,16 @@ function flash(msg: string) {
   }
 
   const TABS: { id: AdminTab; label: string }[] = [
-    { id: "reports",  label: "Reported Comments" },
-    { id: "comments", label: "All Comments" },
-    { id: "users",    label: "Users" },
-    { id: "banned",   label: "Banned" },
-    { id: "pulsenow", label: "PulseNow" },
-    { id: "polls", label: "Polls" }
-  ];
+  { id: "reports",  label: "Reported Comments" },
+  { id: "comments", label: "All Comments" },
+  { id: "users",    label: "Users" },
+  { id: "banned",   label: "Banned" },
+  { id: "pulsenow", label: "PulseNow" },
+  { id: "polls", label: "Polls" },
+  { id: "townhall", label: "TownHall" }
+];
+  
+  
 
 
   return (
@@ -1061,6 +1107,63 @@ function flash(msg: string) {
     </div>
   </div>
 )}
+
+{tab === "townhall" && (
+  <div className="space-y-3">
+    {townhallPosts.map((post) => (
+      <div
+        key={post.id}
+        className="border border-white/10 bg-white/[0.02] p-5"
+      >
+        <div className="flex justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-xs text-gray-500 mb-2">
+              {new Date(post.created_at).toLocaleDateString()}
+            </p>
+
+            <p className="text-gray-300 whitespace-pre-wrap">
+              {post.content}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            {!post.hidden ? (
+              <AdminBtn
+                onClick={() => hideTownHall(post.id)}
+                variant="gold"
+              >
+                Hide
+              </AdminBtn>
+            ) : (
+              <AdminBtn
+                onClick={() => restoreTownHall(post.id)}
+                variant="ghost"
+              >
+                Restore
+              </AdminBtn>
+            )}
+
+            <AdminBtn
+              onClick={() => deleteTownHall(post.id)}
+              variant="red"
+            >
+              Delete
+            </AdminBtn>
+
+            <AdminBtn
+              onClick={() => banUser(post.user_id)}
+              variant="darkred"
+            >
+              Ban User
+            </AdminBtn>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
+
       </div>
 
       {/* Footer */}
