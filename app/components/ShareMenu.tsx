@@ -9,18 +9,18 @@ interface ShareMenuProps {
   title: string;
   stats?: string;
   commentText?: string;
-  username?: string;
   representativeId?: number; // for share tracking
+  civicIdentity?: string;
 }
 
-export default function ShareMenu({ url, title, stats, commentText, username, representativeId }: ShareMenuProps) {
+export default function ShareMenu({ url, title, stats, commentText, civicIdentity, representativeId }: ShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const fullUrl = typeof window !== "undefined" ? `${window.location.origin}${url}` : url;
 
   const shareText = commentText
-    ? `"${commentText}" — @${username} on Pulse50\n${fullUrl}`
+  ? `"${commentText}" — ${civicIdentity} on Pulse50\n${fullUrl}`
     : stats
     ? `${title} — ${stats} on Pulse50\n${fullUrl}`
     : `${title} on Pulse50\n${fullUrl}`;

@@ -692,7 +692,7 @@ function CommentThread({
               url={profileUrl}
               title={representative?.name || ""}
               commentText={comment.content}
-              username={civicDisplay}
+              civicIdentity={civicDisplay}
             />
             <button
               onClick={() => onReport(comment.id)}

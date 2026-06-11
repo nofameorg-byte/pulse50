@@ -52,14 +52,15 @@ export async function triggerReplyNotifications(
 
     const uniqueUserIds = [...new Set(commenters.map((c) => c.user_id))] as string[];
 
-    // Get poster's username for the message
+    // Get poster's civic identity for the message
     const { data: posterProfile } = await supabase
       .from("profiles")
-      .select("username")
+      .select("civic_name,state_abbr")
       .eq("id", posterUserId)
       .single();
 
-    const posterName = posterProfile?.username || "Someone";
+    const posterName =
+ `${posterProfile?.state_abbr || "US"} • ${posterProfile?.civic_name || "Citizen"}`
     const link = `/representatives/${representativeId}`;
     const message = `${posterName} joined the discussion on ${repName}`;
 

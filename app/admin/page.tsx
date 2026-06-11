@@ -18,13 +18,18 @@ interface ReportedComment {
     user_id: string;
     representative_id: number;
     hidden: boolean;
-    profiles: { username: string };
-  };
+    profiles: {
+  civic_name: string;
+  state_abbr: string;
+};
+};
 }
+
 
 interface BannedUser {
   id: string;
-  username: string;
+  civic_name: string;
+  state_abbr: string;
   banned_at: string;
 }
 
@@ -116,7 +121,7 @@ export default function AdminPage() {
     setLoading(true);
     const { data, error } = await supabase
       .from("comment_reports")
-      .select(`*, comments(id, content, user_id, representative_id, hidden, profiles(username))`)
+      .select(`*, comments(id, content, user_id, representative_id, hidden, profiles(civic_name,state_abbr))`)
       .order("created_at", { ascending: false });
     if (!error) setReports(data || []);
     setLoading(false);
@@ -126,7 +131,7 @@ export default function AdminPage() {
     setLoading(true);
     const { data } = await supabase
       .from("comments")
-      .select("*, profiles(username)")
+      .select("*, profiles(civic_name,state_abbr)")
       .order("created_at", { ascending: false })
       .limit(100);
     setAllComments(data || []);
@@ -137,7 +142,7 @@ export default function AdminPage() {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, banned_at")
+      .select("id, civic_name, state_abbr, banned_at")
       .eq("banned", true)
       .order("banned_at", { ascending: false });
     setBannedUsers(data || []);
@@ -148,7 +153,7 @@ export default function AdminPage() {
     setLoading(true);
     const { data } = await supabase
       .from("profiles")
-      .select("id, username, created_at, banned, is_admin")
+      .select("id, civic_name, state_abbr, created_at, banned, is_admin")
       .order("created_at", { ascending: false })
       .limit(100);
     setAllUsers(data || []);
@@ -597,7 +602,7 @@ function flash(msg: string) {
                     <div>
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className="text-yellow-400 font-bold text-sm">
-                          @{r.comments?.profiles?.username || "Unknown"}
+                          {r.comments?.profiles?.state_abbr || "US"} • {r.comments?.profiles?.civic_name || "Citizen"}
                         </span>
                         <span className="text-gray-600 text-xs">
                           {new Date(r.created_at).toLocaleDateString()}
@@ -646,7 +651,7 @@ function flash(msg: string) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-yellow-400 font-bold text-sm">@{c.profiles?.username || "Citizen"}</span>
+                        <span className="text-yellow-400 font-bold text-sm">{c.profiles?.state_abbr || "US"} • {c.profiles?.civic_name || "Citizen"}</span>
                         <span className="text-gray-600 text-xs">{new Date(c.created_at).toLocaleDateString()}</span>
                         {c.hidden && <span className="border border-gray-700 text-gray-500 text-xs px-2 py-0.5 font-bold uppercase">Hidden</span>}
                       </div>
@@ -674,7 +679,7 @@ function flash(msg: string) {
                 <div key={u.id} className={`border p-5 flex items-center justify-between gap-4 ${u.banned ? "border-red-500/20 bg-red-500/5" : "border-white/10 bg-white/[0.02]"}`}>
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-white font-bold">@{u.username || "Unnamed"}</span>
+                      <span className="text-white font-bold">{u.state_abbr || "US"} • {u.civic_name || "Citizen"}</span>
                       {u.is_admin && <span className="bg-yellow-400 text-black text-xs font-black px-2 py-0.5 uppercase">Admin</span>}
                       {u.banned && <span className="bg-red-500 text-white text-xs font-black px-2 py-0.5 uppercase">Banned</span>}
                     </div>
@@ -703,7 +708,7 @@ function flash(msg: string) {
               ) : bannedUsers.map((u) => (
                 <div key={u.id} className="border border-red-500/20 bg-red-500/5 p-5 flex items-center justify-between gap-4">
                   <div>
-                    <span className="text-white font-bold">@{u.username}</span>
+                    <span className="text-white font-bold">{u.state_abbr || "US"} • {u.civic_name || "Citizen"}</span>
                     <p className="text-gray-600 text-xs mt-1">
                       Banned {u.banned_at ? new Date(u.banned_at).toLocaleDateString() : "—"}
                     </p>
