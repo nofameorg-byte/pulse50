@@ -69,7 +69,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [lang, setLang] = useState<Lang>("en");
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const mode = "signup";
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [selectedState, setSelectedState] = useState("");
@@ -218,48 +218,14 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           <div className="mb-8">
             <p className="text-xs font-bold uppercase tracking-widest text-yellow-400 mb-2">
-              {mode === "login" ? t.welcomeBack : t.join}
+              {t.join}
             </p>
             <h1 className="text-5xl font-black text-white leading-none whitespace-pre-line">
-              {mode === "login" ? t.signInTitle : t.createTitle}
+              SIGN UP / LOGIN
             </h1>
           </div>
 
-          <div className="flex border border-white/10 mb-8">
-            <button
-              type="button"
-              onClick={() => {
-                setMode("login");
-                setCodeSent(false);
-                setError("");
-                setSuccess("");
-              }}
-              className={`flex-1 py-3 text-sm font-black uppercase tracking-wider transition ${
-                mode === "login"
-                  ? "bg-yellow-400 text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {t.login}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setMode("signup");
-                setCodeSent(false);
-                setError("");
-                setSuccess("");
-              }}
-              className={`flex-1 py-3 text-sm font-black uppercase tracking-wider transition ${
-                mode === "signup"
-                  ? "bg-yellow-400 text-black"
-                  : "text-gray-400 hover:text-white"
-              }`}
-            >
-              {t.signup}
-            </button>
-          </div>
-
+         
           {success && (
             <div className="mb-6 border border-green-500/30 bg-green-500/10 px-4 py-3 text-green-400 text-sm font-bold">
               {success}
