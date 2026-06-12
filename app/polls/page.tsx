@@ -264,7 +264,7 @@ async function loadPolls() {
       return (
         <div
           key={poll.id}
-          className="w-[320px] flex-shrink-0"
+          className="w-[360px] md:w-[420px] flex-shrink-0"
         >
           <PollCard
             poll={poll}
@@ -313,7 +313,7 @@ function PollCard({ poll, selected, onVote }: PollCardProps) {
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
-      <div className="w-full aspect-video border-b border-white/10 relative overflow-hidden">
+      <div className="w-full h-[220px] border-b border-white/10 relative overflow-hidden">
   {poll.image_url ? (
     <img
       src={poll.image_url}
