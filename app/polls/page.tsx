@@ -258,7 +258,7 @@ async function loadPolls() {
         {/* Poll slider */}
 <div className="overflow-x-auto pb-4">
   <div className="flex gap-5">
-    {polls.map((poll) => {
+    {polls.map((poll, index) => {
       const selected = selections[poll.id] ?? null;
 
       return (
@@ -267,10 +267,11 @@ async function loadPolls() {
           className="w-[360px] md:w-[420px] flex-shrink-0"
         >
           <PollCard
-            poll={poll}
-            selected={selected}
-            onVote={(choice) => handleVote(poll.id, choice)}
-          />
+  poll={poll}
+  displayNumber={polls.length - index}
+  selected={selected}
+  onVote={(choice) => handleVote(poll.id, choice)}
+/>
         </div>
       );
     })}
@@ -300,11 +301,12 @@ async function loadPolls() {
 // ── Poll Card ─────────────────────────────────────────────────────────────────
 interface PollCardProps {
   poll: Poll;
+  displayNumber: number;
   selected: "standby" | "walkaway" | null;
   onVote: (choice: "standby" | "walkaway") => void;
 }
 
-function PollCard({ poll, selected, onVote }: PollCardProps) {
+function PollCard({ poll, displayNumber, selected, onVote }: PollCardProps) {
   const standByPct = poll.standBy;
   const walkAwayPct = poll.walkAway;
 
@@ -329,7 +331,7 @@ function PollCard({ poll, selected, onVote }: PollCardProps) {
   )}
 
   <div className="absolute top-3 left-3 bg-yellow-400 text-black text-xs font-black px-2 py-0.5 uppercase tracking-wider">
-    #{poll.id}
+    #{displayNumber}
   </div>
 </div>
         
