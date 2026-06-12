@@ -86,15 +86,27 @@ export default function NowTownHallPage() {
   }
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="relative min-h-screen bg-black text-white overflow-hidden">
+
+  {/* TownHall Background */}
+  <div
+    className="absolute inset-0 bg-cover bg-center opacity-35"
+    style={{
+      backgroundImage: "url('/townhall-bg.jpg')",
+    }}
+  />
+
+  {/* Dark Overlay */}
+  <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/65 to-black/85" />
+
+  {/* Content Layer */}
+  <div className="relative z-10">
       <nav className="sticky top-0 z-50 border-b border-white/10 bg-black/95 backdrop-blur-xl">
   <div className="mx-auto flex max-w-7xl items-center justify-between px-4 md:px-6 py-4">
     <Link href="/" className="text-2xl md:text-3xl font-black tracking-tight shrink-0">
       <span className="text-white">Pulse</span>
       <span className="text-yellow-400">50</span>
-      <span className="ml-2 text-xs uppercase tracking-widest text-yellow-400/80">
-        TownHall
-      </span>
+
     </Link>
 
     <div className="hidden md:flex items-center gap-6">
@@ -163,18 +175,30 @@ export default function NowTownHallPage() {
       
 
       <div className="mx-auto max-w-4xl px-4 md:px-6 py-10">
-        <div className="mb-8">
-          <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-400 mb-3">
-            Pulse50 Now TownHall
-          </p>
+        <div className="mb-8 text-center">
+          <p className="text-xs font-black uppercase tracking-[0.3em] text-yellow-400 mb-4 text-center">
+  Pulse50 Now
+</p>
 
           <h1 className="text-5xl md:text-7xl font-black leading-none mb-4">
             TOWN<span className="text-yellow-400">HALL</span>
           </h1>
 
-          <p className="text-gray-400 text-base leading-relaxed">
-            Discuss the issues you see in Pulse50 Now.
-          </p>
+          <p className="text-gray-300 text-lg leading-relaxed max-w-3xl mx-auto">
+  Join citizens from across America in public discussion, debate,
+  community concerns, civic issues, government accountability,
+  and the topics shaping your community.
+</p>
+
+<h1 className="text-4xl md:text-4xl font-black text-white mb-4 text-center">
+  YOUR VOICE
+  <br />
+  <span className="text-yellow-300">YOUR COMMUNITY</span>
+  <br />
+  YOUR FUTURE
+</h1>
+
+
         </div>
 
         <div className="border border-yellow-400/20 bg-yellow-400/[0.03] p-5 mb-8">
@@ -186,7 +210,7 @@ export default function NowTownHallPage() {
           />
 
           <div className="flex justify-between items-center mt-4 gap-4">
-            <p className="text-xs text-gray-600">
+            <p className="text-xs text-yellow-400 font-semibold">
               Keep it respectful. Talk about the issue, not personal attacks.
             </p>
 
@@ -199,6 +223,14 @@ export default function NowTownHallPage() {
             </button>
           </div>
         </div>
+
+
+<div className="flex justify-center items-center gap-2 mb-8">
+  <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
+  <span className="text-xs font-black uppercase tracking-[0.2em] text-yellow-400">
+    Live Public Discussion
+  </span>
+</div>
 
         {loading ? (
           <p className="text-gray-600">Loading TownHall...</p>
@@ -216,7 +248,7 @@ export default function NowTownHallPage() {
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="border border-white/10 bg-white/[0.02] p-5"
+                className="border border-white/10 bg-black/70 backdrop-blur-sm p-5"
               >
                 <div className="flex items-center justify-between gap-4 mb-2">
                   <p className="text-yellow-400 text-xs font-black uppercase tracking-wider">
@@ -235,9 +267,11 @@ export default function NowTownHallPage() {
             ))}
           </div>
         )}
-      </div>
+       </div>
 
-    
-    </main>
-  );
+    </div>
+
+</main>
+ 
+);
 }

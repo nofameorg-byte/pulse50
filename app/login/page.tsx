@@ -324,9 +324,25 @@ useEffect(() => {
             </button>
           </form>
 
-          <p className="text-center text-xs text-gray-700 mt-8 leading-relaxed">
-            {t.terms}
-          </p>
+<p className="text-center text-xs text-gray-700 mt-8 leading-relaxed">
+  By creating an account you agree to our{" "}
+  <Link href="/terms" className="text-yellow-400 hover:underline">
+    Terms of Service
+  </Link>{" "}
+  and{" "}
+  <Link href="/privacy" className="text-yellow-400 hover:underline">
+    Privacy Policy
+  </Link>.
+</p>
+
+<p className="text-center text-xs text-gray-700 mt-3">
+  <Link
+    href="/instructions"
+    className="text-yellow-400 hover:underline"
+  >
+    View Instructions & Mobile App Setup
+  </Link>
+</p>
         </div>
       </div>
     </main>
