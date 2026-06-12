@@ -52,6 +52,7 @@ interface CivicVideo {
 const ALL_LABELS = [
   "Campaign", "MAGA", "Black Lives Matter", "Infrastructure",
   "Crime", "Education", "Economy", "Public Safety", "Government", "Housing",
+  "Community Concern", "Breaking News", "U.S. president", "Local City", "Supreme Court", "T.V. Show",
 ];
 
 const BLANK_VIDEO: Omit<CivicVideo, "id" | "created_at" | "support_count" | "unsupport_count" | "view_count"> = {
