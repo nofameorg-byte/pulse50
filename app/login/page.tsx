@@ -191,7 +191,7 @@ useEffect(() => {
       return;
     }
 
-    router.push("/representatives");
+    router.replace("/");
   }
 
   return (
