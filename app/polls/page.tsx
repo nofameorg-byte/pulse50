@@ -309,7 +309,7 @@ function PollCard({ poll, selected, onVote }: PollCardProps) {
   const walkAwayPct = poll.walkAway;
 
   return (
-    <div className="border border-white/10 bg-white/[0.02] flex flex-col relative overflow-hidden group hover:border-yellow-400/30 transition">
+    <div className="border border-white/10 bg-white/[0.02] flex flex-col relative overflow-hidden group hover:border-yellow-400/30 transition h-[440px]">
       {/* Top accent line */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
@@ -338,7 +338,7 @@ function PollCard({ poll, selected, onVote }: PollCardProps) {
       <div className="p-5 flex flex-col gap-4 flex-1">
 
         {/* Question */}
-        <h3 className="text-white font-black text-base leading-snug flex-1">
+        <h3 className="text-white font-black text-base leading-snug h-[52px] overflow-hidden">
           {poll.question}
         </h3>
 

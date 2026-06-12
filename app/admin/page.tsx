@@ -1092,7 +1092,7 @@ function flash(msg: string) {
     </div>
 
     <div className="space-y-3">
-      {polls.map((poll) => (
+      {polls.map((poll, index) => (
         <div
           key={poll.id}
           className="border border-white/10 bg-white/[0.02] p-5"
@@ -1104,8 +1104,8 @@ function flash(msg: string) {
               </p>
 
               <p className="text-xs text-gray-500 mt-1">
-                Poll #{poll.id}
-              </p>
+  Poll #{polls.length - index}
+</p>
             </div>
 
             <div className="flex gap-2">
