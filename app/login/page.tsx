@@ -69,7 +69,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   const [lang, setLang] = useState<Lang>("en");
-  const mode = "signup";
+  const mode = "signup" as const;
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [selectedState, setSelectedState] = useState("");
@@ -80,6 +80,20 @@ export default function LoginPage() {
 
   const emailRef = useRef<HTMLInputElement>(null);
   const t = text[lang];
+
+
+useEffect(() => {
+  async function checkSession() {
+    const { data } = await supabase.auth.getSession();
+
+    if (data.session) {
+      router.replace("/representatives");
+    }
+  }
+
+  checkSession();
+}, [router]);
+
 
   useEffect(() => {
     const saved = localStorage.getItem("pulse50_lang");
