@@ -82,6 +82,7 @@ export default function AdminPage() {
   const [townhallPosts, setTownhallPosts] = useState<any[]>([]);
   const [pollQuestion, setPollQuestion] = useState("");
   const [pollImageUrl, setPollImageUrl] = useState("");
+  const [pollImageFile, setPollImageFile] = useState<File | null>(null);
   const [editingPoll, setEditingPoll] = useState<any | null>(null);
   
   // PulseNow state
@@ -185,17 +186,38 @@ async function fetchPolls() {
 async function createPoll() {
   if (!pollQuestion.trim()) return;
 
-  const { error } = await supabase
-    .from("pulse_polls")
-    .insert({
-      question: pollQuestion.trim(),
-      image_url: pollImageUrl.trim() || null,
-      active: true,
-    });
+  let imageUrl = pollImageUrl.trim() || null;
+
+  if (pollImageFile) {
+    const fileName = `${Date.now()}-${pollImageFile.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("poll-images")
+      .upload(fileName, pollImageFile);
+
+    if (uploadError) {
+      console.error("UPLOAD ERROR:", uploadError);
+      alert(uploadError.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("poll-images")
+      .getPublicUrl(fileName);
+
+    imageUrl = data.publicUrl;
+  }
+
+  const { error } = await supabase.from("pulse_polls").insert({
+    question: pollQuestion.trim(),
+    image_url: imageUrl,
+    active: true,
+  });
 
   if (!error) {
     setPollQuestion("");
     setPollImageUrl("");
+    setPollImageFile(null);
     fetchPolls();
   }
 }
@@ -204,16 +226,39 @@ function editPoll(poll: any) {
   setEditingPoll(poll);
   setPollQuestion(poll.question || "");
   setPollImageUrl(poll.image_url || "");
+  setPollImageFile(null);
 }
 
 async function savePoll() {
   if (!editingPoll) return;
 
+  let imageUrl = pollImageUrl.trim() || null;
+
+  if (pollImageFile) {
+    const fileName = `${Date.now()}-${pollImageFile.name}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("poll-images")
+      .upload(fileName, pollImageFile);
+
+    if (uploadError) {
+      console.error("UPLOAD ERROR:", uploadError);
+      alert(uploadError.message);
+      return;
+    }
+
+    const { data } = supabase.storage
+      .from("poll-images")
+      .getPublicUrl(fileName);
+
+    imageUrl = data.publicUrl;
+  }
+
   const { error } = await supabase
     .from("pulse_polls")
     .update({
       question: pollQuestion.trim(),
-      image_url: pollImageUrl.trim() || null,
+      image_url: imageUrl,
     })
     .eq("id", editingPoll.id);
 
@@ -221,9 +266,12 @@ async function savePoll() {
     setEditingPoll(null);
     setPollQuestion("");
     setPollImageUrl("");
+    setPollImageFile(null);
     fetchPolls();
   }
 }
+
+
 
 async function deletePoll(id: number) {
   if (!confirm("Delete this poll?")) return;
@@ -273,23 +321,7 @@ async function handlePollImageUpload(
   const file = e.target.files?.[0];
   if (!file) return;
 
-  const fileName = `${Date.now()}-${file.name}`;
-
-  const { error } = await supabase.storage
-    .from("poll-images")
-    .upload(fileName, file);
-
-    if (error) {
-  console.error("UPLOAD ERROR:", error);
-  alert(error.message);
-  return;
-}
-
-  const { data } = supabase.storage
-    .from("poll-images")
-    .getPublicUrl(fileName);
-
-  setPollImageUrl(data.publicUrl);
+  setPollImageFile(file);
 }
 
 
