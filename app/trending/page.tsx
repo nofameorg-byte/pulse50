@@ -246,7 +246,7 @@ export default function TrendingPage() {
           <div className="relative">
             <div
               className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scroll-smooth"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              
             >
               {sorted.map((item, idx) => (
                 <div key={item.id} className="snap-start shrink-0 w-[85vw] sm:w-[360px] relative">

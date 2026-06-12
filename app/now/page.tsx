@@ -135,16 +135,15 @@ function VideoCard({ video }: { video: CivicVideo }) {
   const isTrending = localSupport + localUnsupport >= 500;
 
   return (
-    <div className="border border-white/10 bg-white/[0.02] hover:border-yellow-400/50 transition group flex flex-col relative overflow-hidden">
+    <div className="border border-white/10 bg-white/[0.02] hover:border-yellow-400/50 transition group flex flex-col relative overflow-hidden h-[520px]">
       {/* Gold top line on hover */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-yellow-400 scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
 
       {/* Thumbnail */}
       <div
-        className="relative w-full bg-black overflow-hidden cursor-pointer"
-        style={{ aspectRatio: "16/9" }}
-        onClick={() => setShowVideo(true)}
-      >
+  className="relative w-full h-[235px] bg-black overflow-hidden cursor-pointer"
+  onClick={() => setShowVideo(true)}
+>
         {showVideo ? (
           <iframe
             className="w-full h-full"
