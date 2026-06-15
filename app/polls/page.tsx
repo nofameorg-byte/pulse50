@@ -358,8 +358,8 @@ function PollCard({ poll, displayNumber, selected, onVote }: PollCardProps) {
 
         {/* Percentages */}
         <div className="flex justify-between text-xs font-black uppercase tracking-wider">
-          <span className="text-yellow-400">{standByPct}% Stand By</span>
-          <span className="text-red-400">{walkAwayPct}% Walk Away</span>
+          <span className="text-yellow-400">{standByPct}% YES</span>
+          <span className="text-red-400">{walkAwayPct}% NO</span>
         </div>
 
         {/* Total votes */}
@@ -370,25 +370,26 @@ function PollCard({ poll, displayNumber, selected, onVote }: PollCardProps) {
         {/* Vote buttons */}
         <div className="flex gap-3 pt-1">
           <button
-            onClick={() => onVote("standby")}
-            className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
-              selected === "standby"
-                ? "bg-yellow-400 text-black border-yellow-400"
-                : "border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10"
-            }`}
-          >
-            Stand By
-          </button>
-          <button
-            onClick={() => onVote("walkaway")}
-            className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
-              selected === "walkaway"
-                ? "bg-red-500 text-white border-red-500"
-                : "border-red-500/30 text-red-400 hover:bg-red-500/10"
-            }`}
-          >
-            Walk Away
-          </button>
+  onClick={() => onVote("standby")}
+  className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
+    selected === "standby"
+      ? "bg-yellow-400 text-black border-yellow-400"
+      : "border-yellow-400/30 text-yellow-400 hover:bg-yellow-400/10"
+  }`}
+>
+  YES
+</button>
+
+<button
+  onClick={() => onVote("walkaway")}
+  className={`flex-1 py-3 text-xs font-black uppercase tracking-wider border transition ${
+    selected === "walkaway"
+      ? "bg-red-500 text-white border-red-500"
+      : "border-red-500/30 text-red-400 hover:bg-red-500/10"
+  }`}
+>
+  NO
+</button>
         </div>
       </div>
     </div>
