@@ -423,7 +423,7 @@ async function runTavilySearch(query: string) {
     },
     body: JSON.stringify({
       query,
-      search_depth: "basic",
+      search_depth: "advanced",
       include_answer: true,
       include_raw_content: false,
       max_results: 6,
@@ -436,23 +436,33 @@ async function runTavilySearch(query: string) {
   }
 
   const data = await response.json();
+  const answer = data?.answer || "";
   const results: TavilyResult[] = Array.isArray(data?.results) ? data.results : [];
 
   if (results.length === 0) return "";
 
-  return results
-    .slice(0, 6)
-    .map((result, index) =>
-      [
-        `SOURCE ${index + 1}`,
-        `Title: ${result.title || "Untitled"}`,
-        `URL: ${result.url || "No URL"}`,
-        `Content: ${result.content || "No content snippet available."}`,
-      ].join("\n")
-    )
-    .join("\n\n");
-}
+  const sources = results
+  .slice(0, 6)
+  .map((result, index) =>
+    [
+      `SOURCE ${index + 1}`,
+      `Title: ${result.title || "Untitled"}`,
+      `URL: ${result.url || "No URL"}`,
+      `Content: ${result.content || "No content snippet available."}`,
+    ].join("\n")
+  )
+  .join("\n\n");
 
+return `
+TAVILY AI SUMMARY
+
+${answer}
+
+----------------------------
+
+${sources}
+`;
+} //
 const KNOWN_BILLS = {
   "hr 1": { congress: "119", type: "hr", number: "1" },
   "one big beautiful bill": { congress: "119", type: "hr", number: "1" },
@@ -541,7 +551,10 @@ ${billData?.bill?.congress || ""}
   }
 }
 
-async function searchLiveCivicWeb(message: string, history: OrivooHistoryItem[]) {
+async function searchInternet(
+  message: string,
+  history: OrivooHistoryItem[]
+) {
   try {
     const searchMessage = buildSearchMessage(message, history);
     const queries = buildUniversalCivicQueries(searchMessage);
@@ -648,14 +661,18 @@ export async function POST(req: Request) {
         ];
       });
 
-    const shouldVerifyLive = needsLiveCivicVerification(message, combinedHistory);
-
     const congressContext = await getCongressBillContext(message);
 
-    const liveCivicContext =
-      congressContext ||
-      (shouldVerifyLive ? await searchLiveCivicWeb(message, combinedHistory) : "");
+const internetContext = await searchInternet(
+  message,
+  combinedHistory
+);
 
+const liveCivicContext = `
+${congressContext}
+
+${internetContext}
+`;
     const groqMessages = [
       { role: "system" as const, content: ORIVOO_SYSTEM_PROMPT },
       { role: "system" as const, content: getLanguageInstruction(language) },
